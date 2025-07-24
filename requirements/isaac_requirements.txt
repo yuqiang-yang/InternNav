@@ -1,0 +1,14 @@
+gym==0.26.2
+scipy==1.15.2
+lmdb==1.6.2
+msgpack-numpy==0.4.8
+ftfy==6.3.1
+diffusers==0.21.4
+huggingface-hub==0.25.2
+-e git+https://github.com/real-stanford/diffusion_policy.git@5ba07ac6661db573af695b419a7947ecb704690f#egg=diffusion_policy
+numpy==1.26.0
+ray==2.47.1
+tyro==0.9.26
+wandb==0.20.0
+pandas==2.2.3
+pyarrow==20.0.0

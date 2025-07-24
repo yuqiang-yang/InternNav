@@ -1,0 +1,44 @@
+from grnavigation.configs.agent import AgentCfg
+from grnavigation.configs.evaluator import (
+    EnvCfg,
+    EvalCfg,
+    EvalDatasetCfg,
+    SceneCfg,
+    TaskCfg,
+)
+
+eval_cfg = EvalCfg(
+    agent=AgentCfg(
+        server_port=8087,
+        model_name='cma',
+        ckpt_path='data/checkpoints/cma/checkpoint-333040',
+        model_settings={},
+    ),
+    env=EnvCfg(
+        env_type='vln_pe',
+        env_settings={
+            'use_fabric': False,
+            'headless': True,
+        },
+    ),
+    task=TaskCfg(
+        task_name='cma_eval',
+        task_settings={
+            'env_num': 2,
+            'use_distributed': True,
+            'proc_num': 1,
+        },
+        scene=SceneCfg(
+            scene_type='mp3d',
+            mp3d_data_dir='/shared/smartbot/vln-pe/Matterport3D/data/v1/scans',
+        ),
+        robot_name='h1',
+    ),
+    dataset=EvalDatasetCfg(
+        dataset_settings={
+            'base_data_dir': 'data/datasets/R2R_VLNCE_v1-3_corrected',
+            'split_data_types': ['val_unseen', 'val_seen'],
+            'filter_stairs': True,
+        },
+    ),
+)
