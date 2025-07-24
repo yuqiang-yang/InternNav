@@ -45,6 +45,8 @@ class RDPTrainer(BaseTrainer):
             N,
         ) = inputs
 
+        N = N[0][0]
+
         observations_batch = {
             k: v.to(
                 device=self.args.device,

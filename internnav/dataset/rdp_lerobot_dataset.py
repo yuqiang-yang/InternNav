@@ -415,7 +415,7 @@ def rdp_collate_fn(batch):
 
     observations_batch = batch
 
-    B = len(observations_batch)
+    B = torch.tensor(len(observations_batch))
 
     new_observations_batch = defaultdict(list)
     for sensor in observations_batch[0].keys():
@@ -442,9 +442,11 @@ def rdp_collate_fn(batch):
         observations_batch[sensor] = observations_batch[sensor].view(-1, *observations_batch[sensor].size()[2:])
 
     observations_batch = ObservationsDict(observations_batch)
+    # Expand B to match the flattened batch size
+    B_expanded = B.repeat(observations_batch['prev_actions'].shape[0]).view(-1, 1)
     return (
         observations_batch,
         observations_batch['prev_actions'],
         not_done_masks_batch.view(-1, 1),
-        B
+        B_expanded
     )

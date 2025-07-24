@@ -25,7 +25,7 @@ seq2seq_exp_cfg = ExpCfg(
         step_interval=50,
     ),
     il=IlCfg(
-        epochs=100,
+        epochs=80,
         save_interval_epochs=5,
         batch_size=2,
         lr=1e-4,

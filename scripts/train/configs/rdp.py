@@ -30,9 +30,9 @@ rdp_exp_cfg = ExpCfg(
         len_traj_act=2,
     ),
     il=IlCfg(
-        epochs=100,
+        epochs=50,
         save_interval_epochs=5,
-        batch_size=4,
+        batch_size=2,
         lr=1e-4,
         num_workers=8,
         weight_decay=1e-4,
