@@ -141,10 +141,10 @@ def main(config, model_class, model_config_class):#config是exp_cfg(包括基础
                     print(f"Distributed initialization FAILED: {str(e)}")
                     world_size = 1  # 回退到单GPU
             # 打印分布式状态
-        print("="*50)
-        print("After distributed init:")
-        print(f"LOCAL_RANK: {local_rank}")
-        print(f"WORLD_SIZE: {world_size}")
+            print("="*50)
+            print("After distributed init:")
+            print(f"LOCAL_RANK: {local_rank}")
+            print(f"WORLD_SIZE: {world_size}")
         if dist.is_initialized():
             print(f"Dist WORLD_SIZE: {dist.get_world_size()}")
             print(f"Dist RANK: {dist.get_rank()}")
@@ -189,7 +189,7 @@ def main(config, model_class, model_config_class):#config是exp_cfg(包括基础
         transformers_logger = logging.getLogger("transformers")
         if transformers_logger.hasHandlers():
             transformers_logger.handlers = []
-        if local_rank in [0, -1]:  # 仅主进程或非分布式
+        if config.model_name == "navdp" and local_rank in [0, -1]:  # 仅主进程或非分布式
             transformers_logger.addHandler(train_logger.handlers[0])
         transformers_logger.setLevel(logging.INFO)
 
