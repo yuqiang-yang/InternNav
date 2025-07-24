@@ -1,6 +1,6 @@
 # from scripts.eval.configs.agent import *
-from grnavigation.configs.agent import AgentCfg
-from grnavigation.configs.evaluator import (
+from internnav.configs.agent import AgentCfg
+from internnav.configs.evaluator import (
     EnvCfg,
     EvalCfg,
     EvalDatasetCfg,

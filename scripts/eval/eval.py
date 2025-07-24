@@ -1,12 +1,12 @@
 import sys
 sys.path.append('.')
 
-from grnavigation.configs.model.seq2seq import seq2seq_eval_cfg
-from grnavigation.configs.model.cma import cma_eval_cfg
-from grnavigation.configs.model.rdp import rdp_eval_cfg
-from grnavigation.configs.evaluator.default_config import get_config
-from grnavigation.evaluator import Evaluator
-from grnavigation.evaluator.utils.config import Config  # Ensure Config is imported
+from internnav.configs.model.seq2seq import seq2seq_eval_cfg
+from internnav.configs.model.cma import cma_eval_cfg
+from internnav.configs.model.rdp import rdp_eval_cfg
+from internnav.configs.evaluator.default_config import get_config
+from internnav.evaluator import Evaluator
+from internnav.evaluator.utils.config import Config  # Ensure Config is imported
 import argparse
 import importlib.util
 

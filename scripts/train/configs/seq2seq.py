@@ -1,7 +1,7 @@
-from grnavigation.configs.model.seq2seq import seq2seq_cfg
-from grnavigation.configs.trainer.eval import EvalCfg
-from grnavigation.configs.trainer.exp import ExpCfg
-from grnavigation.configs.trainer.il import FilterFailure, IlCfg, Loss
+from internnav.configs.model.seq2seq import seq2seq_cfg
+from internnav.configs.trainer.eval import EvalCfg
+from internnav.configs.trainer.exp import ExpCfg
+from internnav.configs.trainer.il import FilterFailure, IlCfg, Loss
 
 seq2seq_exp_cfg = ExpCfg(
     name='seq2seq_train',

@@ -39,37 +39,37 @@ Model是模型的具体实现，输入为当前的机器人的状态信息，包
 - 2: turn left
 - 3: turn right
 
-具体controller的实现参考[`discrete_controller.py`](../grnavigation/projects/grutopia_vln_extension/controllers/discrete_controller.py)
+具体controller的实现参考[`discrete_controller.py`](../internnav/projects/grutopia_vln_extension/controllers/discrete_controller.py)
 
-所有自定义模型都应该继承自`PreTrainedModel`，并实现必要的方法，具体例子可以参考[`cma_model.py`](../grnavigation/model/cma/cma_policy.py)中的`CMANet`。
+所有自定义模型都应该继承自`PreTrainedModel`，并实现必要的方法，具体例子可以参考[`cma_model.py`](../internnav/model/cma/cma_policy.py)中的`CMANet`。
 
 ### 创建自定义Config类
-在Model文件中定义Config，Config应该继承自`PretrainedConfig`，具体实现可参考[`cma_model.py`](../grnavigation/model/cma/cma_policy.py)中的`CMAModelConfig`。
+在Model文件中定义Config，Config应该继承自`PretrainedConfig`，具体实现可参考[`cma_model.py`](../internnav/model/cma/cma_policy.py)中的`CMAModelConfig`。
 
 ### 注册和集成
 
-在[`grnavigation.model`](../grnavigation/model/__init__.py)中的`get_policy`中添加新模型，在`get_config`中添加新模型的配置
+在[`internnav.model`](../internnav/model/__init__.py)中的`get_policy`中添加新模型，在`get_config`中添加新模型的配置
 
 ### 创建自定义Agent
 
-Agent负责与环境的交互、数据的预处理和后处理，并调用Model进行推理。自定义Agent通常需要继承自[`Agent`](../grnavigation/agent/base.py)，并实现如下关键方法：
+Agent负责与环境的交互、数据的预处理和后处理，并调用Model进行推理。自定义Agent通常需要继承自[`Agent`](../internnav/agent/base.py)，并实现如下关键方法：
 
 - `reset()`：重置Agent的内部状态（如RNN状态、历史动作等），通常在每个episode开始时调用。
 - `inference(obs)`：接收环境观测`obs`，进行必要的预处理（如tokenize指令、pad等），调用模型推理，并返回动作。
 - `step(obs)`：对外接口，通常调用`inference`，并可包含额外的日志或计时。
 
-具体例子可参考[`CMAAgent`](../grnavigation/agent/cma_agent.py)
+具体例子可参考[`CMAAgent`](../internnav/agent/cma_agent.py)
 
 ### 创建训练器
 
-训练器负责模型的训练流程管理，包括数据加载、前向传播、损失计算、反向传播等。自定义训练器通常需要继承自[`基础训练器类`](../grnavigation/trainer/base.py)，并实现如下关键方法：
+训练器负责模型的训练流程管理，包括数据加载、前向传播、损失计算、反向传播等。自定义训练器通常需要继承自[`基础训练器类`](../internnav/trainer/base.py)，并实现如下关键方法：
 
 - `train_epoch()`：执行一个训练epoch，包括数据批次迭代、模型前向传播、损失计算和参数更新。
 - `eval_epoch()`：执行模型评估，在验证集上测试模型性能并记录指标。
 - `save_checkpoint()`：保存模型检查点，包括模型权重、优化器状态和训练进度。
 - `load_checkpoint()`：加载预训练模型或恢复训练状态。
 
-具体实现可参考[`CMATrainer`](../grnavigation/trainer/cma_trainer.py)，该训练器展示了如何处理序列数据、计算动作损失以及实现模仿学习的训练逻辑。
+具体实现可参考[`CMATrainer`](../internnav/trainer/cma_trainer.py)，该训练器展示了如何处理序列数据、计算动作损失以及实现模仿学习的训练逻辑。
 
 <!-- 训练器还需要处理以下关键功能：
 - **数据加载**：配置DataLoader，处理批次数据的预处理和增强
@@ -81,11 +81,11 @@ Agent负责与环境的交互、数据的预处理和后处理，并调用Model�
 
 ### 创建数据集（如需要）
 
-如果您的模型需要特殊的数据预处理，可以创建新的数据集类，数据集类需继承自[`BaseDataset`](../grnavigation/dataset/base.py)，并实现以下关键方法：
+如果您的模型需要特殊的数据预处理，可以创建新的数据集类，数据集类需继承自[`BaseDataset`](../internnav/dataset/base.py)，并实现以下关键方法：
 
 - `_load_next`：负责从数据集中加载下一个样本，返回一个观测字典（dict），包含模型所需的所有输入字段。通常需要结合数据索引、LMDB等存储方式实现数据的高效读取和解码。
 
-具体实现可以参照[`cma_dataset.py`](../grnavigation/dataset/cma_dataset.py)
+具体实现可以参照[`cma_dataset.py`](../internnav/dataset/cma_dataset.py)
 
 ### 设置对应的配置
 可参考以下现有配置文件进行自定义配置：
@@ -137,21 +137,21 @@ Agent负责与环境的交互、数据的预处理和后处理，并调用Model�
 
 ### 训练模型代码示例
 训练模型的代码可见
-- [`grnavigation/agent/cma_agent.py`](../grnavigation/agent/cma_agent.py)
-- [`grnavigation/model/cma/cma_policy.py`](../grnavigation/model/cma/cma_policy.py)
-- [`grnavigation/configs/model/cma.py`](../grnavigation/configs/model/cma.py)
+- [`internnav/agent/cma_agent.py`](../internnav/agent/cma_agent.py)
+- [`internnav/model/cma/cma_policy.py`](../internnav/model/cma/cma_policy.py)
+- [`internnav/configs/model/cma.py`](../internnav/configs/model/cma.py)
 - [`scripts/train/configs/cma.py`](../scripts/train/configs/cma.py)
 
 如果需要自己定义task，目前框架所使用的task代码在
-- [`grnavigation/projects/grutopia_vln_extension/tasks/vln_eval_task.py`](../grnavigation/projects/grutopia_vln_extension/tasks/vln_eval_task.py)
+- [`internnav/projects/grutopia_vln_extension/tasks/vln_eval_task.py`](../internnav/projects/grutopia_vln_extension/tasks/vln_eval_task.py)
 
 可供参考
 
 ### 评估模型代码示例
 评估模型代码可见
-- [`grnavigation/agent/cma_agent.py`](../grnavigation/agent/cma_agent.py)
-- [`grnavigation/model/cma/cma_policy.py`](../grnavigation/model/cma/cma_policy.py)
-- [`grnavigation/configs/model/cma.py`](../grnavigation/configs/model/cma.py)
+- [`internnav/agent/cma_agent.py`](../internnav/agent/cma_agent.py)
+- [`internnav/model/cma/cma_policy.py`](../internnav/model/cma/cma_policy.py)
+- [`internnav/configs/model/cma.py`](../internnav/configs/model/cma.py)
 - [`scripts/eval/configs/h1_cma_cfg.py`](../scripts/eval/configs/h1_cma_cfg.py)
 
 可供参考

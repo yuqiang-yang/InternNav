@@ -31,7 +31,7 @@ if [ -n "$processes" ]; then
         echo "kill: $pid"
     done
 fi
-python grnavigation/agent/utils/server.py --config $CONFIG > server.log 2>&1 &
+python internnav/agent/utils/server.py --config $CONFIG > server.log 2>&1 &
 
 
 export GRUTOPIA_ASSETS_PATH=$GRUTOPIA_ASSETS_PATH

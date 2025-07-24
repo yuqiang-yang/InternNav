@@ -12,10 +12,10 @@ from transformers import (
 import habitat
 
 import numpy as np
-from grnavigation.model.basemodel.internvla_n1.internvla_n1 import InternVLAN1ForCausalLM
-from grnavigation.utils.dist import *
-from grnavigation.habitat_extensions.evaluator import VLNEvaluator
-from grnavigation.habitat_extensions import measures
+from internnav.model.basemodel.internvla_n1.internvla_n1 import InternVLAN1ForCausalLM
+from internnav.utils.dist import *
+from internnav.habitat_extensions.evaluator import VLNEvaluator
+from internnav.habitat_extensions import measures
 
 def parse_args():
 

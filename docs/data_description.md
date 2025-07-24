@@ -63,7 +63,7 @@
 ```
 
 ### cma_dataset 转换后数据
-为了更好的处理数据，与评测数据统一，在训练cma模型时，我们使用了[cma_dataset](../grnavigation/dataset/cma_dataset.py)，将原始数据转换成如下结构
+为了更好的处理数据，与评测数据统一，在训练cma模型时，我们使用了[cma_dataset](../internnav/dataset/cma_dataset.py)，将原始数据转换成如下结构
 ```json
 {
   "instruction": "tokenized natural language navigation command - numpy.ndarray(bs, 200)",
@@ -77,7 +77,7 @@
   "depth": "depth image from robot camera - numpy.ndarray(bs, 256, 256, 1)"
 }
 ```
-如果需要修改训练数据所用的数据结构，可以根据[cma_dataset](../grnavigation/dataset/cma_dataset.py)自行实现。
+如果需要修改训练数据所用的数据结构，可以根据[cma_dataset](../internnav/dataset/cma_dataset.py)自行实现。
 
 
 
@@ -100,7 +100,7 @@
 
 ## GPU数据搬运
 
-为了让数据能够在GPU上进行运算，方便模型处理，我们提供了[`batch_obs`](../grnavigation/evaluator/utils/models.py)函数将数据搬运到gpu上进行运算
+为了让数据能够在GPU上进行运算，方便模型处理，我们提供了[`batch_obs`](../internnav/evaluator/utils/models.py)函数将数据搬运到gpu上进行运算
 
 ## GRUtopia相关资源
 

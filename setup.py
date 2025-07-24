@@ -42,7 +42,7 @@ with open('requirements/eval.txt', 'r') as f:
     install_requires = f.read().splitlines()
 
 setuptools.setup(
-    name='grnavigation',
+    name='internnav',
     version='0.0.1',
     packages=setuptools.find_packages(),
     author='OpenRobotLab',

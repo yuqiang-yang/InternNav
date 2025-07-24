@@ -2,6 +2,6 @@
 	path = src/diffusion-policy
 	url = https://github.com/real-stanford/diffusion_policy.git
 	commit = 5ba07ac6661db573af695b419a7947ecb704690f
-[submodule "grnavigation/model/basemodel/LongCLIP"]
-	path = grnavigation/model/basemodel/LongCLIP
+[submodule "internnav/model/basemodel/LongCLIP"]
+	path = internnav/model/basemodel/LongCLIP
 	url = https://github.com/beichenzbc/Long-CLIP

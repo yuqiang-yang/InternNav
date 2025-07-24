@@ -1,7 +1,7 @@
-from grnavigation.configs.model.cma import cma_cfg
-from grnavigation.configs.trainer.eval import EvalCfg
-from grnavigation.configs.trainer.exp import ExpCfg
-from grnavigation.configs.trainer.il import FilterFailure, IlCfg, Loss
+from internnav.configs.model.cma import cma_cfg
+from internnav.configs.trainer.eval import EvalCfg
+from internnav.configs.trainer.exp import ExpCfg
+from internnav.configs.trainer.il import FilterFailure, IlCfg, Loss
 
 cma_exp_cfg = ExpCfg(
     name='cma_train',

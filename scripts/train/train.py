@@ -11,10 +11,10 @@ import tyro
 from pydantic import BaseModel
 from transformers import TrainerCallback, TrainingArguments
 
-from grnavigation.dataset.cma_lerobot_dataset import CMALerobotDataset, cma_collate_fn
-from grnavigation.dataset.rdp_lerobot_dataset import RDP_LerobotDataset, rdp_collate_fn
-from grnavigation.dataset.navdp_dataset import NavDP_Base_Datset, navdp_collate_fn
-from grnavigation.model import (
+from internnav.dataset.cma_lerobot_dataset import CMALerobotDataset, cma_collate_fn
+from internnav.dataset.rdp_lerobot_dataset import RDP_LerobotDataset, rdp_collate_fn
+from internnav.dataset.navdp_dataset import NavDP_Base_Datset, navdp_collate_fn
+from internnav.model import (
     CMAModelConfig,
     CMANet,
     RDPModelConfig,
@@ -24,11 +24,11 @@ from grnavigation.model import (
     NavDPNet,
     NavDPModelConfig,
 )
-from grnavigation.model.utils.logger import MyLogger
-from grnavigation.model.utils.utils import load_dataset
-from grnavigation.trainer import CMATrainer, RDPTrainer, NavDPTrainer
+from internnav.model.utils.logger import MyLogger
+from internnav.model.utils.utils import load_dataset
+from internnav.trainer import CMATrainer, RDPTrainer, NavDPTrainer
 from scripts.train.configs import cma_exp_cfg, rdp_exp_cfg, seq2seq_exp_cfg, navdp_exp_cfg
-from grnavigation.trainer.base import BaseTrainer
+from internnav.trainer.base import BaseTrainer
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data import DataLoader
 from PIL import Image
@@ -98,7 +98,7 @@ def _make_dir(config):
         os.makedirs(config.log_dir)
 
 
-def main(config, model_class, model_config_class):#config是exp_cfg(包括基础配置和实验、验证配置)，参考/cpfs/user/yangyuqiang/longyilin/grnavigation/scripts/train/configs/cma.py
+def main(config, model_class, model_config_class):#config是exp_cfg(包括基础配置和实验、验证配置)，参考/cpfs/user/yangyuqiang/longyilin/internnav/scripts/train/configs/cma.py
     try:
         """Main training function."""
         _make_dir(config)
@@ -152,7 +152,7 @@ def main(config, model_class, model_config_class):#config是exp_cfg(包括基础
             print("Distributed NOT initialized")
 
         # ------------ load model ------------
-        model_cfg = model_config_class(model_cfg=config.model_dump())#把config实例转换成字典再转换成NavDPModelConfig：navdp_exp_cfg（对应navdp_exp_cfg，参照/cpfs/user/yangyuqiang/longyilin/grnavigation/scripts/train/configs/cma.py里的cma_exp_cfg
+        model_cfg = model_config_class(model_cfg=config.model_dump())#把config实例转换成字典再转换成NavDPModelConfig：navdp_exp_cfg（对应navdp_exp_cfg，参照/cpfs/user/yangyuqiang/longyilin/internnav/scripts/train/configs/cma.py里的cma_exp_cfg
         model = model_class.from_pretrained(pretrained_model_name_or_path=config.il.ckpt_to_load, config=model_cfg)
         if config.model_name == "navdp":
             model.to(device)

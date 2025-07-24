@@ -1,7 +1,7 @@
-from grnavigation.configs.model.navdp import navdp_cfg
-from grnavigation.configs.trainer.eval import EvalCfg
-from grnavigation.configs.trainer.exp import ExpCfg
-from grnavigation.configs.trainer.il import FilterFailure, IlCfg, Loss
+from internnav.configs.model.navdp import navdp_cfg
+from internnav.configs.trainer.eval import EvalCfg
+from internnav.configs.trainer.exp import ExpCfg
+from internnav.configs.trainer.il import FilterFailure, IlCfg, Loss
 import os
 
 navdp_exp_cfg = ExpCfg(

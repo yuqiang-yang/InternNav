@@ -1,7 +1,7 @@
-from grnavigation.configs.model.rdp import rdp_cfg
-from grnavigation.configs.trainer.eval import EvalCfg
-from grnavigation.configs.trainer.exp import ExpCfg
-from grnavigation.configs.trainer.il import FilterFailure, IlCfg, Loss
+from internnav.configs.model.rdp import rdp_cfg
+from internnav.configs.trainer.eval import EvalCfg
+from internnav.configs.trainer.exp import ExpCfg
+from internnav.configs.trainer.il import FilterFailure, IlCfg, Loss
 
 rdp_exp_cfg = ExpCfg(
     name='rdp_train',
