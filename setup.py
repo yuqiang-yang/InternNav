@@ -49,7 +49,7 @@ setuptools.setup(
     author_email='OpenRobotLab@pjlab.org.cn',
     license='Apache 2.0',
     readme='README.md',
-    description='GRNavigation: A benchmark evaluation framework for navigation tasks',
+    description='InternNav: A benchmark evaluation framework for navigation tasks',
     long_description=long_description,
     long_description_content_type='text/markdown',
     python_requires='>=3.8, <=3.12',
