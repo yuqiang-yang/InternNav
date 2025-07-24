@@ -27,17 +27,6 @@ class runner_status_code(Enum):
     STOP = 4
 
 
-# def transform_action_batch(origin):
-#     transformed_actions = []
-#     for _, a in enumerate([*map(lambda a: a[0], origin)]):
-#         if a == 0:
-#             transformed_actions.append({'h1': {'stop': []}})
-#         elif a == -1:
-#             transformed_actions.append({'h1': {'stand_still': []}})
-#         else:
-#             transformed_actions.append({'h1': {'move_by_discrete': [a]}})
-#     return transformed_actions
-
 def transform_action_batch(actions, flash=False):
     transformed_actions = []
     for action in actions:
@@ -173,12 +162,10 @@ class VlnMultiEvaluator(Evaluator):
         )
 
     def env_step(self, action):
-
-        # TODO: 加循环
         start_time = time()
         # stop_count = [0 for _ in range(self.env_num * self.sim_num)]
         while True:
-            # stop 需要特殊处理，stop 也需要走 50 步
+            # stop action maybe also need 50 steps
             self.runner_status[
                 np.logical_and(self.runner_status == runner_status_code.NORMAL, action == {'h1': {'stop': []}})
             ] = runner_status_code.STOP
@@ -190,7 +177,7 @@ class VlnMultiEvaluator(Evaluator):
             finish_status = np.logical_or(
                 np.array([ob['finish_action'] for ob in obs]),
                 np.array(terminated),
-            )  # 强条件
+            )  # strong condition
 
             if (
                 np.logical_and.reduce(np.array(finish_status)[self.runner_status == runner_status_code.NORMAL])
@@ -202,7 +189,7 @@ class VlnMultiEvaluator(Evaluator):
                 print(f'finish_status: {finish_status}')
         end_time = time()
         duration = round(end_time - start_time, 2)
-        log.info(f'env step 耗时: {duration}s')
+        log.info(f'env step time: {duration}s')
         return obs, terminated
 
     def terminate_ops(self, obs_ls, reset_infos, terminated_ls):
@@ -250,7 +237,7 @@ class VlnMultiEvaluator(Evaluator):
             reset_infos = np.array(reset_infos)
             reset_infos[reset_env_ids] = (
                 new_reset_infos if len(new_reset_infos) > 0 else None
-            )  # 如果只有一个reset且没有new_reset_infos，返回一个空数组
+            ) 
             self.runner_status[
                 np.vectorize(lambda x: x)(reset_infos) == None  # noqa: E711
             ] = runner_status_code.TERMINATED

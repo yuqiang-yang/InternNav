@@ -10,7 +10,7 @@ from internnav.configs.evaluator import (
 
 eval_cfg = EvalCfg(
     agent=AgentCfg(
-        server_port=8023,  # pid 107829 118081 #? 与agent/utils/server.py中端口一致，目前没有用args，需手动改
+        server_port=8023,
         model_name='internvla_n1',
         ckpt_path='',
         model_settings={
@@ -28,11 +28,11 @@ eval_cfg = EvalCfg(
             'num_history': 8,
             'num_future_steps': 4,
             
-            'device': 'cuda:6',
+            'device': 'cuda:0',
             'predict_step_nums': 32,
             'continuous_traj': True, 
             # debug
-            'vis_debug': False,
+            'vis_debug': True, # If vis_debug=True, you can get visualization results
             'vis_debug_path': './logs/test/vis_debug' 
         },
     ),
@@ -63,9 +63,7 @@ eval_cfg = EvalCfg(
         dataset_settings={
             'base_data_dir': '/shared/smartbot/vln-pe/data/datasets/R2R_VLNCE_v1-3_corrected',
             'split_data_types': ['val_unseen'],  # 'val_seen'
-            
-            'filter_stairs': True, 
-            
+            'filter_stairs': True,      
             # 'selected_scans': ['zsNo4HB9uLZ'],
             # 'selected_scans': ['8194nk5LbLH', 'pLe4wQe7qrG'],
         },

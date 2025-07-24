@@ -173,7 +173,7 @@ class VLNEvalTask(BaseTask):
         elif action_name == 'move_by_flash':
             obs.update(self.get_rgb_depth())
             
-        obs['finish_action'] = True  # 此地就可以判断是否完成，所以obs不需要controller了
+        obs['finish_action'] = True
         self.robot.current_action = None
         # update when stop
         dones, reason = self.done_checker.execute(obs, action_name, self.step_count)  # TODO: how to out
