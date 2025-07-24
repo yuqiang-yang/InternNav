@@ -23,15 +23,13 @@ class VLNCamera(BaseSensor):
     def get_data(self) -> Dict:
         output_data = {}
         output_data['rgba'] = self._camera.get_rgba()
-        # if output_data['rgba'].shape[0] < self.config.resolution[0]:
-        #     output_data['rgba'] = np.random.randint(0, 256, (self.config.resolution[0], self.config.resolution[1], 4), dtype=np.uint8)
-        #     log.error("rgba shape wrong, use random one!!!")
+        if output_data['rgba'].shape[0] < self.config.resolution[1]:
+            output_data['rgba'] = np.random.randint(0, 256, (self.config.resolution[1], self.config.resolution[0], 4), dtype=np.uint8)
+            log.error("rgba shape wrong, use random one!!!")
         output_data['depth'] = self._camera.get_distance_to_image_plane()
-        # import ipdb; ipdb.set_trace()
-        
-        # if output_data['depth'].shape[0] < self.config.resolution[0]:
-        #     output_data['depth'] = np.random.randint(0, 256, (self.config.resolution[0], self.config.resolution[1]), dtype=np.float32)
-        #     log.error("depth shape wrong, use random one!!!")
+        if output_data['depth'].shape[0] < self.config.resolution[1]:
+            output_data['depth'] = np.random.uniform(0, 256, size=(self.config.resolution[1], self.config.resolution[0])).astype(np.float32)
+            log.error("depth shape wrong, use random one!!!")
         return self._make_ordered(output_data)
 
     def post_reset(self):
