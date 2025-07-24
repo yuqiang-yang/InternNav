@@ -176,7 +176,7 @@ class VLNEvalTask(BaseTask):
         obs['finish_action'] = True
         self.robot.current_action = None
         # update when stop
-        dones, reason = self.done_checker.execute(obs, action_name, self.step_count)  # TODO: how to out
+        dones, reason = self.done_checker.execute(obs, action_name, self.step_count)  
         self._done = dones[0]
         if self._done:
             self.update_metrics({self.robot_name: obs})

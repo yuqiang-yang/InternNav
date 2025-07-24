@@ -142,7 +142,7 @@ class VlnPeEvaluator(Evaluator):
 
         start_time = time()
         while True:
-            # stop 需要特殊处理，stop 也需要走 50 步
+            # Stop requires special handling and also requires 50 steps to be taken
             self.runner_status[
                 np.logical_and(self.runner_status == runner_status_code.NORMAL, action == {'h1': {'stop': []}})
             ] = runner_status_code.STOP
@@ -151,7 +151,7 @@ class VlnPeEvaluator(Evaluator):
             finish_status = np.logical_or(
                 np.array([ob['finish_action'] for ob in obs]),
                 np.array(terminated),
-            )  # 强条件
+            )
 
             if (
                 np.logical_and.reduce(np.array(finish_status)[self.runner_status == runner_status_code.NORMAL])
@@ -161,7 +161,7 @@ class VlnPeEvaluator(Evaluator):
                 break
         end_time = time()
         duration = round(end_time - start_time, 2)
-        log.debug(f'env step 耗时: {duration}s')
+        log.debug(f'env step duration: {duration}s')
 
         return obs, terminated
 
@@ -207,7 +207,7 @@ class VlnPeEvaluator(Evaluator):
             reset_infos = np.array(reset_infos)
             reset_infos[reset_env_ids] = (
                 new_reset_infos if len(new_reset_infos) > 0 else None
-            )  # 如果只有一个reset且没有new_reset_infos，返回一个空数组
+            )  # If there is only one reset and no new_deset_infos, return an empty array
             self.runner_status[
                 np.vectorize(lambda x: x)(reset_infos) == None  # noqa: E711
             ] = runner_status_code.TERMINATED

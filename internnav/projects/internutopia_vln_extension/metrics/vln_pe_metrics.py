@@ -65,13 +65,12 @@ class VLNPEMetrics(BaseMetric):
         self.fail_reason = obs['fail_reason'] if 'fail_reason' in obs else ''
 
         # 更新步骤计数
-        self.sim_step += 1  # TODO: 是否包含 warm_up
-        # print(f'metrics step: {self.sim_step}')
+        self.sim_step += 1  
         # 计算当前path_length
         if self.prev_position is not None:  # 初始化，warm_up会变位置
             self.current_path_length += np.linalg.norm(current_position[:2] - self.prev_position[:2])  # 总路程长度 只要xy
         else:
-            self.pred_traj_list[0].append(current_position)  # TODO: 是否需要？
+            self.pred_traj_list[0].append(current_position)  
         self.prev_position = current_position
         # 当前的
         if obs['finish_action']:

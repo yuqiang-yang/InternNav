@@ -3,9 +3,6 @@ from pathlib import Path
 from time import time
 
 import numpy as np
-from internutopia.core.config.robot import ControllerCfg, SensorCfg
-from internutopia_extension.configs.robots.h1 import H1RobotCfg
-# from grutopia_extension.configs.robots.h1 import H1RobotCfg
 
 from internnav.configs.evaluator import EvalCfg
 from internnav.evaluator.base import Evaluator
@@ -64,12 +61,7 @@ class VlnMultiEvaluator(Evaluator):
         progress_log_multi_util.progress_logger_multi.info(
             f'start eval dataset: {self.task_name}, total_path:{self.dataloader.size}'  # noqa: E501
         )
-        # generate episode
-        # robot = H1RobotCfg(
-        #     **config.task.robot.robot_settings,
-        #     controllers=[ControllerCfg(**cfg.controller_settings) for cfg in config.task.robot.controllers],
-        #     sensors=[SensorCfg(**cfg.sensor_settings) for cfg in config.task.robot.sensors],
-        # )
+
         self.robot_flash = config.task.robot_flash
         
         episodes = generate_episode(self.dataloader, config)
@@ -220,7 +212,6 @@ class VlnMultiEvaluator(Evaluator):
                     trajectory_id=self.now_path_key(reset_info),
                     step_count=obs['metrics'][list(obs['metrics'].keys())[0]][0]['steps'],
                     result=obs['metrics'][list(obs['metrics'].keys())[0]][0]['fail_reason'],
-                    # result = obs['fail_reason'], # TODO: may have some bugs
                 )
                 self.result_logger.write_now_result()
                 self.runner_status[env_id] = runner_status_code.NOT_RESET

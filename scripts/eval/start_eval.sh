@@ -1,12 +1,12 @@
 #!/bin/bash
 # source /root/miniconda3/etc/profile.d/conda.sh
-# conda activate grutopia
+# conda activate internutopia
 
 source /root/miniconda3/etc/profile.d/conda.sh
-conda activate grutopia
+conda activate internutopia
 
 CONFIG=scripts/eval/configs/h1_cma_cfg.py
-GRUTOPIA_ASSETS_PATH=/shared/smartbot/datasets/GRUtopia-assets
+INTERNUTOPIA_ASSETS_PATH=/shared/smartbot/datasets/GRUtopia-assets
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -14,8 +14,8 @@ while [[ $# -gt 0 ]]; do
             CONFIG="$2"
             shift 2
             ;;
-        --grutopia_assets_path)
-            GRUTOPIA_ASSETS_PATH="$2"
+        --internutopia_assets_path)
+            INTERNUTOPIA_ASSETS_PATH="$2"
             shift 2
             ;;
         *)
@@ -24,7 +24,7 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
-processes=$(ps -ef | grep 'rnavigation/agent/utils/server.py' | grep -v grep | awk '{print $2}')
+processes=$(ps -ef | grep 'internnav/agent/utils/server.py' | grep -v grep | awk '{print $2}')
 if [ -n "$processes" ]; then
     for pid in $processes; do
         kill -9 $pid
@@ -34,65 +34,59 @@ fi
 python internnav/agent/utils/server.py --config $CONFIG > server.log 2>&1 &
 
 
-export GRUTOPIA_ASSETS_PATH=$GRUTOPIA_ASSETS_PATH
-# 配置参数
+export INTERNUTOPIA_ASSETS_PATH=$INTERNUTOPIA_ASSETS_PATH
 
-RETRY_LIMIT=5    # 设置最大重试次数
-MONITOR_INTERVAL=60 # 监控间隔（秒）
-DEADLOCK_THRESHOLD=$((5 * 60)) # 判断卡死的时间 (秒)
+RETRY_LIMIT=5
+MONITOR_INTERVAL=60
+DEADLOCK_THRESHOLD=$((5 * 60))
 
-# 启动进程的启动命令
-START_COMMAND="python -u scripts/eval/eval.py --config $CONFIG" # 替换为实际的启动命令
+START_COMMAND="python -u scripts/eval/eval.py --config $CONFIG"
 LOG_FILE="eval.log"
 
-# 进程 ID
 pid=0
-# 当前重试次数
+
 retry_count=0
 
-# 启动进程函数
+
 start_process() {
     echo "Starting process..."
     $START_COMMAND > "$LOG_FILE" 2>&1 &
     pid=$!
 }
 
-# 检查进程状态函数
+
 check_process() {
     if ! kill -0 $pid > /dev/null 2>&1; then
         echo "Process $pid has exited."
-        return 1 # 表示进程已退出
+        return 1
     fi
-    return 0 # 表示进程仍在运行
+    return 0
 }
 
-# 检查日志是否更新
+
 check_log_update() {
     if [ ! -e "$LOG_FILE" ]; then
-        return 1 # 文件未找到，视为未更新
+        return 1
     fi
     last_update=$(stat -c %Y "$LOG_FILE")
     current_time=$(date +%s)
 
-    # 使用 $(( ... )) 进行算术运算
     delta=$(( current_time - last_update ))
 
     if [ $delta -ge $DEADLOCK_THRESHOLD ]; then
         echo "Log file has not been updated for $((DEADLOCK_THRESHOLD / 60)) minutes."
-        return 1 # 日志未更新，视为卡死
+        return 1
     fi
 
-    return 0 # 日志已更新
+    return 0
 }
 
-# 启动进程
 start_process
 
 while true; do
     sleep $MONITOR_INTERVAL
     echo "start healthcheck"
 
-    # 检查进程状态
     if ! check_process; then
         if [ $retry_count -lt $RETRY_LIMIT ]; then
             echo "Retrying... (Attempt $((retry_count + 1))/$RETRY_LIMIT)"
@@ -103,7 +97,6 @@ while true; do
             exit 1
         fi
     else
-        # 进程仍在运行，检查日志
         if ! check_log_update; then
             if [ $retry_count -lt $RETRY_LIMIT ]; then
                 echo "Restarting process due to log file not updating... (Attempt $((retry_count + 1))/$RETRY_LIMIT)"

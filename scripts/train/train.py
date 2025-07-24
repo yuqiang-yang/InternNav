@@ -48,9 +48,6 @@ class TrainCfg(BaseModel):
     model_name: str = 'cma'  # Model name, options: 'cma', 'seq2seq', 'rdp', 'navdp'
 
 
-#####################################################################################
-# TODO Waiting for moving
-#####################################################################################
 class CheckpointFormatCallback(TrainerCallback):
     """This callback format checkpoint to make them standalone. For now, it copies all config
     files to /checkpoint-{step}/experiment_cfg/:
@@ -75,18 +72,13 @@ class CheckpointFormatCallback(TrainerCallback):
             # Copy experiment config directory if provided
 
 
-#            if self.exp_cfg_dir is not None:
-#                exp_cfg_dst = checkpoint_dir / Path(self.exp_cfg_dir)
-#                if Path(self.exp_cfg_dir).exists():
-#                    shutil.copytree(self.exp_cfg_dir, exp_cfg_dst, dirs_exist_ok=True)
-
 #####################################################################################
 # main training function
 #####################################################################################
 
 
 def _make_dir(config):
-    config.tensorboard_dir = config.tensorboard_dir % config.name  # TODO
+    config.tensorboard_dir = config.tensorboard_dir % config.name  
     config.checkpoint_folder = config.checkpoint_folder % config.name
     config.log_dir = config.log_dir % config.name
     config.output_dir = config.output_dir % config.name
