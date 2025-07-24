@@ -33,6 +33,9 @@ eval_cfg = EvalCfg(
             mp3d_data_dir='/shared/smartbot/vln-pe/Matterport3D/data/v1/scans',
         ),
         robot_name='h1',
+        robot_usd_path='/robots/h1/h1_vln_pointcloud.usd',
+        camera_resolution=[256,256], # (W,H)
+        camera_prim_path='torso_link/h1_pano_camera_0',
     ),
     dataset=EvalDatasetCfg(
         dataset_settings={

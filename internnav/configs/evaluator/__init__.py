@@ -47,6 +47,7 @@ class TaskCfg(BaseModel):
     robot_usd_path: Optional[str] = None
     camera_resolution: Optional[List[int]] = None
     metric: Optional[MetricCfg] = None
+    camera_prim_path: Optional[str] = None
 
 
 class EvalDatasetCfg(BaseModel):

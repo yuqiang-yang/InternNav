@@ -163,15 +163,10 @@ def get_config(evaluator_cfg: EvalCfg):
     if evaluator_cfg.task.robot_name == 'h1':
         move_by_speed_cfg = h1_vln_move_by_speed_cfg.model_dump()
         robot_type = 'VLNH1Robot'
-        robot_usd_path_ = evaluator_cfg.task.robot_usd_path
-        if robot_usd_path_ is None:
-            robot_usd_path_='/robots/h1/h1_vln_pano_pointcloud_200.usd'
-        robot_usd_path = gm.ASSET_PATH + robot_usd_path_
+        robot_usd_path = gm.ASSET_PATH + evaluator_cfg.task.robot_usd_path
         camera_resolution = evaluator_cfg.task.camera_resolution
-        if camera_resolution is None:
-            camera_resolution = [256,256]
         robot_offset = np.array([0.0, 0.0, 1.05])
-        camera_prim_path = 'torso_link/h1_1_25_down_30'
+        camera_prim_path = evaluator_cfg.task.camera_prim_path
         fall_height_threshold = 0.5
     else:
         raise RuntimeError(f"unknown robot_name: {evaluator_cfg.task.robot_name}")
@@ -215,23 +210,15 @@ def get_config(evaluator_cfg: EvalCfg):
                 controller_settings=stand_still_cfg_,
             ),
             ControllerCfg(
-                controller_type='discrete_controller',
-                controller_name='discrete_controller',
                 controller_settings=discrete_controller_cfg_,
             ),
-            # ControllerCfg(
-            #     controller_type='dp_move_by_speed',
-            #     controller_name='dp_move_by_speed',
-            #     controller_settings=dp_move_by_speed_cfg,
-            # ),
         ],
     )  # may need to be modified to two files
 
     # add the flash controller in, by flash flag.
     if evaluator_cfg.task.robot_flash:
         robot.controllers.append(
-            ControllerCfg(controller_type='flash_controller',
-                controller_name='flash_controller',
+            ControllerCfg(
                 controller_settings=vln_move_by_flash_cfg.model_dump())
         )
 

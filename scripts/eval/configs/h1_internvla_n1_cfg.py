@@ -57,7 +57,8 @@ eval_cfg = EvalCfg(
         robot_name='h1',
         robot_flash=True, 
         robot_usd_path='/robots/h1/h1_vln_multi_camera.usd',
-        camera_resolution=[640, 480] # (W,H)
+        camera_resolution=[640, 480], # (W,H)
+        camera_prim_path='torso_link/h1_1_25_down_30',
     ),
     dataset=EvalDatasetCfg(
         dataset_settings={
