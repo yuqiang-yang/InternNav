@@ -159,21 +159,17 @@ class NavDP_Base_Datset(Dataset):
         depth = np.array(depth,np.float32)
         return depth[:,:,np.newaxis]
 
-    ##########################################
     def process_data_parquet(self,index):
         if not os.path.isfile(self.trajectory_data_dir[index]):
             raise FileNotFoundError(self.trajectory_data_dir[index])
         df = pd.read_parquet(self.trajectory_data_dir[index])
-        # print('################', self.trajectory_data_dir[index])
         camera_intrinsic = np.vstack(np.array(df['observation.camera_intrinsic'].tolist()[0])).reshape(3, 3)
         camera_extrinsic = np.vstack(np.array(df['observation.camera_extrinsic'].tolist()[0])).reshape(4, 4)
         trajectory_length = len(df['action'].tolist())
-        # camera_trajectory = np.array(df['action'].tolist())
         camera_trajectory = np.array([np.stack(frame) for frame in df['action']], dtype=np.float64)
         path_points = np.array(df['observation.path_points'].tolist())
         path_colors = np.array(df['observation.path_colors'].tolist())
-        # path_points = np.stack(df['observation.path_points'], axis=0).reshape(-1, 3)
-        # path_colors = np.stack(df['observation.path_colors'], axis=0).reshape(-1, 3)
+
         path_points = np.concatenate([np.concatenate(row) for row in path_points]).reshape(-1, 3)
         path_colors = np.concatenate([np.concatenate(row) for row in path_colors]).reshape(-1, 3)
 
@@ -185,16 +181,11 @@ class NavDP_Base_Datset(Dataset):
         color_distance = np.abs(np.asarray(pcd_down.colors) - np.array([0,0,0])).sum(axis=-1) # sometimes, the path are saved as black points
         # print(color_distance.shape, path_points.shape, path_colors.shape)
         select_index = np.where(color_distance<0.05)[0]
- 
-        # color_distance = np.abs(path_colors - np.array([0,0,0])).sum(axis=-1) # sometimes, the path are saved as black points
-        # print(color_distance.shape, path_points.shape, path_colors.shape)
-        # select_index = np.where(color_distance<0.05)[0]
 
         trajectory_path = o3d.geometry.PointCloud()
         trajectory_path.points = o3d.utility.Vector3dVector(np.asarray(pcd_down.points)[select_index])
         trajectory_path.colors = o3d.utility.Vector3dVector(np.asarray(pcd_down.colors)[select_index])
         return camera_intrinsic,camera_extrinsic,camera_trajectory,trajectory_length, path_points,trajectory_path
-    ##########################################
 
 
     def process_path_points(self,index):
@@ -326,12 +317,6 @@ class NavDP_Base_Datset(Dataset):
         origin_world_points = extrinsics[start_step:end_step+1,0:3,3]
         mix_anchor_points = rotate_world_points
         
-        # anchor_point_num = np.random.randint(2,10)
-        # origin_anchor_points = origin_world_points[np.linspace(0,origin_world_points.shape[0]-1,anchor_point_num).astype(np.int32)]
-        # augment_anchor_points = rotate_world_points[np.linspace(0,origin_world_points.shape[0]-1,anchor_point_num).astype(np.int32)]
-        # anchor_point_weights = np.random.rand(anchor_point_num,1)
-        # mix_anchor_points = anchor_point_weights * origin_anchor_points + (1 - anchor_point_weights) * augment_anchor_points
-        # mix_anchor_points[0] = origin_anchor_points[0]
         t = np.linspace(0,1,mix_anchor_points.shape[0])
         cs_x = CubicSpline(t,mix_anchor_points[:,0])
         cs_y = CubicSpline(t,mix_anchor_points[:,1])
@@ -378,15 +363,8 @@ class NavDP_Base_Datset(Dataset):
             self._last_time = time.time()
         start_time = time.time()
     
-
-        # trajectory_data = json.load(open(self.trajectory_data_dir[index]))
-        # trajectory_length = len(trajectory_data['camera_trajectory'])
-        # trajectory_extrinsics = np.array(trajectory_data['camera_trajectory'])
-        # trajectory_base_extrinsic = np.array(trajectory_data['camera_extrinsic'])
-        # camera_intrinsic = np.array(trajectory_data['camera_intrinsic'])
-        #############
         camera_intrinsic,trajectory_base_extrinsic,trajectory_extrinsics,trajectory_length,trajectory_path_points,trajectory_path_pcd = self.process_data_parquet(index)
-        #############
+
         # trajectory_path_points,trajectory_path_pcd = self.process_path_points(index)
         trajectory_obstacle_points,trajectory_obstacle_pcd = self.process_obstacle_points(index,trajectory_path_points, trajectory_path_pcd)
         
@@ -454,11 +432,7 @@ class NavDP_Base_Datset(Dataset):
     
     
 if __name__ == "__main__":
-    # dataset = NavDP_Base_Datset(['/shared/smartbot/caiwenzhe/navdata_1M_new/embodiedscan_matterport3d'],
-    #                             "./dataloader/multiview_dataset_17_new.json",
-    #                             8,24,224,trajectory_data_scale=1.0,scene_data_scale=1.0,preload=True)
-    # root_dirs = "/nav-oss/nav_20w_lerobot/"
-    # output_dir = "./output_test"
+    # Debug
     dataset = NavDP_Base_Datset("/nav-oss/nav_20w_lerobot/",
                                 "/shared/smartbot/caiwenzhe/navdp_trainer/output_test/multiview_dataset_lerobot.json",
                                 8,24,224,trajectory_data_scale=1.0,scene_data_scale=1.0,preload=True)
@@ -480,125 +454,3 @@ if __name__ == "__main__":
        goal_info_image = cv2.putText(goal_info_image,"PointGoal=[{:.3f}, {:.3f}, {:.3f}]".format(*point_goal),(190,210),cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,255))
        cv2.imwrite("./output_test/goal_information.png",goal_info_image)
        
-       import pdb
-       pdb.set_trace()
-
-
-    # import json
-    # from tqdm import tqdm
-    # import json
-    # dataloader_data = json.load(open("./dataloader/multiview_dataset_17.json"))
-    # dataloader_data2 = json.load(open("./dataloader/multiview-embodiment-one-verify.json",'r'))
-    # filtered_data = {'trajectory_dirs':[],
-    #                  'trajectory_data_dir':[],
-    #                  'trajectory_rgb_path':[],
-    #                  'trajectory_depth_path':[],
-    #                  'trajectory_afford_path':[]}
-    
-    # #import pdb
-    # #pdb.set_trace()
-    # idxs = np.linspace(0,len(dataloader_data['trajectory_data_dir'])-1,len(dataloader_data2['trajectory_data_dir'])).astype(np.int32)
-    # for idx in tqdm(idxs):
-    #     filtered_data['trajectory_dirs'].append(dataloader_data['trajectory_dirs'][idx])
-    #     filtered_data['trajectory_data_dir'].append(dataloader_data['trajectory_data_dir'][idx])
-    #     filtered_data['trajectory_rgb_path'].append(dataloader_data['trajectory_rgb_path'][idx])
-    #     filtered_data['trajectory_depth_path'].append(dataloader_data['trajectory_depth_path'][idx])
-    #     filtered_data['trajectory_afford_path'].append(dataloader_data['trajectory_afford_path'][idx])
-        
-    # for idx in tqdm(range(len(dataloader_data['trajectory_data_dir']))):
-    #     tobase_height = json.load(open(dataloader_data['trajectory_data_dir'][idx]))['camera_extrinsic']
-    #     tobase_height = np.array(tobase_height)[2,3]
-    #     if tobase_height < 0.5:
-    #         filtered_data['trajectory_dirs'].append(dataloader_data['trajectory_dirs'][idx])
-    #         filtered_data['trajectory_data_dir'].append(dataloader_data['trajectory_data_dir'][idx])
-    #         filtered_data['trajectory_rgb_path'].append(dataloader_data['trajectory_rgb_path'][idx])
-    #         filtered_data['trajectory_depth_path'].append(dataloader_data['trajectory_depth_path'][idx])
-    #         filtered_data['trajectory_afford_path'].append(dataloader_data['trajectory_afford_path'][idx])
-    
-    # import pdb
-    # pdb.set_trace()
-    # with open("./dataloader/multiview-embodiment-cross-verify.json",'w') as f:
-    #     json.dump(filtered_data,f,indent=4)
-    
-    # import pdb
-    # pdb.set_trace()
-    
-    #for idx in range(dataloader_data[''])
-    # dataset = NavDP_Base_Datset(['/shared/smartbot/caiwenzhe/navdata_1M_new/embodiedscan_matterport3d'],
-    #                             "./dataloader/multiview_dataset_matterport3d.json",
-    #                             8,24,224,trajectory_data_scale=1.0,scene_data_scale=1.0,preload=True)
-    # dataset = FastNavDP_Dataset_CriticSum(['/shared/smartbot/caiwenzhe/navdata_1M_new/replica_zed',
-    #                                        '/shared/smartbot/caiwenzhe/navdata_1M_new/replica_d435i',
-    #                                        '/shared/smartbot/caiwenzhe/navdata_1M_new/matterport3d_zed',
-    #                                        '/shared/smartbot/caiwenzhe/navdata_1M_new/matterport3d_d435i',
-    #                                        '/shared/smartbot/caiwenzhe/navdata_1M_new/3dfront_zed',
-    #                                        '/shared/smartbot/caiwenzhe/navdata_1M_new/3dfront_d435i',
-    #                                        '/shared/smartbot/caiwenzhe/navdata_1M_new/hm3d_zed',
-    #                                        '/shared/smartbot/caiwenzhe/navdata_1M_new/hm3d_d435i',
-    #                                        '/shared/smartbot/caiwenzhe/navdata_1M_new/gibson_zed',
-    #                                        '/shared/smartbot/caiwenzhe/navdata_1M_new/gibson_d435i',
-    #                                        '/shared/smartbot/caiwenzhe/navdata_1M_new/matterport3d_zed',
-    #                                        '/shared/smartbot/caiwenzhe/navdata_1M_new/matterport3d_d435i',
-    #                                        '/shared/smartbot/caiwenzhe/navdata_1M_new/embodiedscan_3rscan',
-    #                                        '/shared/smartbot/caiwenzhe/navdata_1M_new/embodiedscan_scannet'],
-                            #  "./dataloader/multiview_dataset_14.json",
-                            #  8,
-                            #  24,
-                            #  224,
-                            #  traj_data_scale = 1.0,
-                            #  scene_data_scale = 1.0,
-                            #  preload = False)
-    
-    # dataset = FastNavDP_Dataset_CriticSum(['/shared/smartbot/caiwenzhe/navdata_1M_new/embodiedscan_3rscan'],
-    #                          "./multiview_dataset_mp3d.json",
-    #                          8,
-    #                          24,
-    #                          224,
-    #                          traj_data_scale = 0.1,
-    #                          scene_data_scale = 0.01,
-    #                          preload = False)
-    
-
-
-    # root_dirs = "/nav-oss/nav_20w_lerobot/"
-    # output_dir = "./output_test"
-
-
-
-    # ### debug ###
-    # os.makedirs(output_dir,exist_ok=True)
-    # os.makedirs(f"{output_dir}/rgb",   exist_ok=True)
-    # os.makedirs(f"{output_dir}/depth", exist_ok=True)
-    # dataset = NavDP_Base_Datset(root_dirs)
-    # import matplotlib.pyplot as plt
-
-    # for i in range(200):
-    #     point_goal,image_goal,pixel_goal,memory_images,depth_image,pred_actions,augment_actions,pred_critic,augment_critic = dataset.__getitem__(i)
-
-    #     depth = depth_image
-    #     depth_vis = (depth - depth.min()) / (depth.max() - depth.min() + 1e-6)
-    #     centers = pred_actions[:, :2] 
-
-    #     depth_vis = (depth_image - depth_image.min()) / (depth_image.max() - depth_image.min() + 1e-8)
-    #     depth_vis = (depth_vis * 255).astype(np.uint8)
-
-    #     for j in range(len(memory_images)):
-    #         print(f"像素值范围: {memory_images[j].min()} - {memory_images[j].max()}")
-    #         rgb_image = (memory_images[j] * 255).astype(np.uint8)
-    #         bgr_image = cv2.cvtColor(memory_images[j], cv2.COLOR_RGB2BGR)
-    #         cv2.imwrite(f"{output_dir}/rgb/rgb_{j:03d}.png", bgr_image)
-        
-    #     cv2.imwrite(f'{output_dir}/depth/depth.jpg', depth_vis.astype(np.uint8))
-
-    #     # Plot the trajectory
-    #     plt.figure(figsize=(10, 5))
-    #     plt.plot(centers[:, 0], centers[:, 1], 'r.-', markersize=3)
-    #     plt.axis('equal')
-    #     plt.title("Camera Trajectory (XY)")
-    #     plt.xlabel('X')
-    #     plt.ylabel('Y')
-    #     plt.grid()
-    #     plt.tight_layout()
-    #     plt.savefig(f'{output_dir}/path_{i}.png', dpi=300, bbox_inches='tight')
-    #     plt.show()
-        
