@@ -310,7 +310,7 @@ class RDP_LmdbDataset(BaseDataset):
 
                     action_deltas = get_delta(actions)
 
-                    if self.config.il.use_descrete_dataset and 'gt_actions' in item_obs.keys():
+                    if self.config.il.use_discrete_dataset and 'gt_actions' in item_obs.keys():
                         end_step_idx = min(step_idx + self.len_traj_pred, len(item_obs['gt_actions']))
                         gt_actions = item_obs['gt_actions'][step_idx:end_step_idx]
                         if len(gt_actions) < self.len_traj_pred:
