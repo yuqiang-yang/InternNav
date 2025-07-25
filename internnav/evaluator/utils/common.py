@@ -178,6 +178,7 @@ def load_data(
         data = json.load(f)['episodes']
         
     scenes = list(set([x['scene_id'] for x in data]))  # e.g. 'mp3d/zsNo4HB9uLZ/zsNo4HB9uLZ.glb'
+    scenes.sort()
     new_data = {}
     for scene in scenes:
         scene_data = [x for x in data if x['scene_id'] == scene]
