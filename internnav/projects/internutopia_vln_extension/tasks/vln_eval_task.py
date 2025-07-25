@@ -148,7 +148,7 @@ class VLNEvalTask(BaseTask):
                 return {self.robot_name: obs}
             else:    
                 obs.update(self.get_rgb_depth())
-                if not self.config.robot_flash:
+                if (not self.config.robot_flash) and (not self.config.one_step_stand_still):
                     self.warm_up_step = 50      # without this, possible issues: delay by get_rgb; break warm up
 
         elif action_name == 'move_by_discrete':

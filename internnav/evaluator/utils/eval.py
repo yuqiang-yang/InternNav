@@ -34,11 +34,13 @@ def generate_episode(dataloader: ResumablePathKeyDataloader, config: EvalCfg):
         start_rotation = data['start_rotation']
         data['path_key'] = path_key
         data['name'] = dataloader.task_name
-        robot_flash = getattr(config.task, "robot_flash", False )
+        robot_flash = getattr(config.task, "robot_flash", False)
+        one_step_stand_still = getattr(config.task, "one_step_stand_still", False)
         episodes.append(
             VLNEvalTaskCfg(
                 **config.task.task_settings,
                 robot_flash=robot_flash,
+                one_step_stand_still=one_step_stand_still,
                 metrics=[VLNPEMetricCfg(**config.task.metric.metric_setting['metric_config'])],
                 scene_asset_path=load_scene_usd(mp3d_data_dir, dataloader.path_key_scan[path_key])
                 if scene_asset_path == ''
