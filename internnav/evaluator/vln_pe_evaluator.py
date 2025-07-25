@@ -22,7 +22,7 @@ class runner_status_code(Enum):
     STOP = 4
 
 
-def transform_action_batch(origin):
+def transform_action_batch(origin, flash=False):
     transformed_actions = []
     for _, a in enumerate([*map(lambda a: a[0], origin)]):
         if a == 0:
@@ -30,7 +30,8 @@ def transform_action_batch(origin):
         elif a == -1:
             transformed_actions.append({'h1': {'stand_still': []}})
         else:
-            transformed_actions.append({'h1': {'move_by_discrete': [a]}})
+            action_name = f"move_by_{'discrete' if not flash else 'flash'}"
+            transformed_actions.append({'h1': {action_name: [a]}})
     return transformed_actions
 
 
@@ -76,6 +77,7 @@ class VlnPeEvaluator(Evaluator):
         super().__init__(config)
         set_seed_model(0)
         self.data_collector = DataCollector(self.dataloader.lmdb_path)
+        self.robot_flash = config.task.robot_flash
 
     @property
     def ignore_obs_attr(self):
@@ -124,7 +126,7 @@ class VlnPeEvaluator(Evaluator):
         if not np.logical_and.reduce(self.runner_status == runner_status_code.WARM_UP):
             action = self.agent.step(obs)
             log.info(f'get {len(action)} actions :{action}')
-            action = transform_action_batch(action)
+            action = transform_action_batch(action, self.robot_flash)
         # change warm_up
         action = np.array(action)
         action[self.runner_status == runner_status_code.WARM_UP] = {'h1': {'stand_still': []}}
