@@ -433,8 +433,8 @@ class NavDP_Base_Datset(Dataset):
     
 if __name__ == "__main__":
     # Debug
-    dataset = NavDP_Base_Datset("/nav-oss/nav_20w_lerobot/",
-                                "/shared/smartbot/caiwenzhe/navdp_trainer/output_test/multiview_dataset_lerobot.json",
+    dataset = NavDP_Base_Datset("/path/to/nav_20w_lerobot/",
+                                "/path/to/navdp_trainer/output_test/multiview_dataset_lerobot.json",
                                 8,24,224,trajectory_data_scale=1.0,scene_data_scale=1.0,preload=True)
     for i in range(200):
        point_goal,image_goal,pixel_goal,memory_images,depth_image,pred_actions,augment_actions,pred_critic,augment_critic,pixel_flag = dataset.__getitem__(i)

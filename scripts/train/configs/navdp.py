@@ -49,9 +49,7 @@ navdp_exp_cfg = ExpCfg(
         lmdb_features_dir='data/sample_episodes/20250211_sample_origin/sample_data.lmdb',
         camera_name='pano_camera_0',
         report_to='tensorboard',  # wandb, tensorboard, none
-        # ---lyl---
-        dataset_navdp = '/cpfs/user/yangyuqiang/longyilin/navdp_trainer/dataloader/multiview_dataset_hssd_modified.json',
-        # world_size = int(os.environ['WORLD_SIZE']),
+        dataset_navdp = '/path/to/dataloader/multiview_dataset_hssd_modified.json',
         image_size=224,
         scene_scale=1.0,
         preload=True,
@@ -66,9 +64,7 @@ navdp_exp_cfg = ExpCfg(
         dropout=0.1,
         scratch=False,
         finetune=True,
-        # device='cuda:0',
         ddp_find_unused_parameters = True,
-        # ---lyl---
         filter_failure=FilterFailure(
             use=True,
             min_rgb_nums=15,

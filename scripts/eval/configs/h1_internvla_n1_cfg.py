@@ -15,8 +15,8 @@ eval_cfg = EvalCfg(
         ckpt_path='',
         model_settings={
             'env_num': 1, 'sim_num': 1,
-            'qwen_path': '/nav-oss/yangyuqiang/Qwen2.5-VL-7B-Instruct',
-            'model_path': "/nav-oss/zhangsiqi/qwen_latent_ckpt_pjq34812/",
+            'qwen_path': '/path/to/Qwen2.5-VL-7B-Instruct',
+            'model_path': "/path/to/qwen_latent_ckpt/",
             'camera_intrinsic': [
                 [585.0, 0.0, 320.0], [0.0, 585.0, 240.0], [0.0, 0.0, 1.0]
             ],

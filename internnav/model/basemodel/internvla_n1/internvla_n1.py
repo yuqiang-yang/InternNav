@@ -81,7 +81,7 @@ class InternVLAN1ForCausalLM(Qwen2_5_VLForConditionalGeneration, InternVLAN1Meta
 
     def __init__(self, config):
         Qwen2_5_VLForConditionalGeneration.__init__(self, config)
-        config.model_type == "InternVLAN1_qwen2.5vl"
+        config.model_type == "internvla_n1"
         
         self.model = InternVLAN1Model(config)
         self.rope_deltas = None 

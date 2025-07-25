@@ -285,27 +285,27 @@ def normalize_data(data, stats, device=None):
 
 
 def map_action_to_2d(delta_actions, max_distance=0.5):
-    """将笛卡尔坐标系下的动作 [delta_x, delta_y, delta_yaw] 转换为归一化的极坐标系 [r, theta]
+    """convert [delta_x, delta_y, delta_yaw] to normalized polar coordinates [r, theta]
     Args:
-        delta_actions: 形状为 (N, 3) 的张量,包含 [delta_x, delta_y, delta_yaw]
-        max_distance: 用于归一化 r 的最大距离值
+        delta_actions: tensor of shape (N, 3), contains [delta_x, delta_y, delta_yaw]
+        max_distance: maximum distance value for normalizing r
     Returns:
-        actions_2d: 形状为 (N, 2) 的张量,包含归一化的 [r, theta]
-        其中 r 和 theta 都在 [-1, 1] 范围内
+        actions_2d: tensor of shape (N, 2), contains normalized [r, theta]
+        where r and theta are in the range of [-1, 1]
     """
     actions_2d = torch.zeros((delta_actions.shape[0], 2))
 
     for a_idx, action in enumerate(delta_actions):
         dx, dy, dyaw = action[0], action[1], action[2]
 
-        # 计算移动距离 r (欧几里得距离)
+        # calculate moving distance r (Euclidean distance)
         r = torch.sqrt(dx * dx + dy * dy)
 
-        # 计算旋转角度 theta (弧度)
+        # calculate rotation angle theta (radians)
         # theta = torch.atan2(dy, dx)
         theta = dyaw
 
-        # 如果是原地不动,则 r 和 theta 都为 0
+        # if not moving, then r and theta are both 0
         if dx == dy == action[2] == 0:
             r = 0
             theta = 0

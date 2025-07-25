@@ -75,28 +75,28 @@ class BaseTrainer(transformers.Trainer):
 
     def save_model(self, output_dir, state_dict=None, **kwargs):
         """
-        保存模型到指定目录
+        save model to specified directory
         
-        处理DDP包装的模型
+        handle DDP wrapped model
         """
-        # 检查是否是DDP包装的模型
+        # check if it is a DDP wrapped model
         if hasattr(self.model, 'module'):
-            # 获取原始模型
+            # get original model
             model_to_save = self.model.module
         else:
             model_to_save = self.model
         
-        # 确保输出目录存在
+        # ensure the output directory exists
         os.makedirs(output_dir, exist_ok=True)
         
-        # 保存模型
+        # save model
         model_to_save.save_pretrained(output_dir, state_dict=state_dict)
         
-        # 保存tokenizer（如果有）
+        # save tokenizer (if any)
         if self.tokenizer is not None:
             self.tokenizer.save_pretrained(output_dir)
         
-        # 保存训练器状态
+        # save trainer state
         # torch.save(self.state_dict(), os.path.join(output_dir, "trainer_state.pt"))
         print(f"Saving model to {output_dir} (is DDP: {hasattr(self.model, 'module')})")
 

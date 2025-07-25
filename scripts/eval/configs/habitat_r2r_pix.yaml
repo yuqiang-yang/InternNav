@@ -79,23 +79,5 @@ habitat:
   dataset:
     type: R2RVLN-v1
     split: val_seen
-    scenes_dir: /nav-oss/scene_datasets/Matterport3D/data/v1/tasks/
+    scenes_dir: /path/to/scene_datasets/Matterport3D/data/v1/tasks/
     data_path: /shared/smartbot/vln-pe/data/datasets/R2R_VLNCE_v1-3_corrected/{split}/{split}.json.gz
-
-  # dataset:
-  #   type: R2RVLN-v1
-  #   split: train
-  #   scenes_dir: data/scene_datasets/
-  #   data_path: data/datasets/vln_datasets/{split}.json.gz
-
-  # dataset:
-  #   type: R2RVLN-v1
-  #   split: scalevln
-  #   scenes_dir: /mnt/petrelfs/wanchenyang/code/ScaleVLN/data/
-  #   data_path: /mnt/petrelfs/wanchenyang/code/ScaleVLN/{split}.json.gz
-
-  # dataset:
-  #   type: R2RVLN-v1
-  #   split: rxr
-  #   scenes_dir: /mnt/petrelfs/wanchenyang/code/ScaleVLN/data/
-  #   data_path: /mnt/petrelfs/wanchenyang/code/ScaleVLN/{split}.json.gz

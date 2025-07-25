@@ -85,7 +85,7 @@ cfg = EvalCfg(
 
 
 def validate_eval_config(eval_cfg: BaseModel):
-    """专门验证评估配置的函数"""
+    """validate the evaluation config"""
 
     def check_nested_none(obj, path=''):
         none_paths = []
@@ -122,28 +122,28 @@ def validate_eval_config(eval_cfg: BaseModel):
 
 def merge_models(base_model, update_model):
     """
-    智能合并两个模型：
-    - dict类型使用dict.update()
-    - 其他类型直接覆盖
+    smart merge two models:
+    - dict type uses dict.update()
+    - other types directly overwrite
     """
     base_dict = base_model.model_dump()
     update_dict = update_model.model_dump(exclude_none=True)
 
     def update(base_dict, update_dict):
         """
-        深度更新，同时处理字典和列表
+        deep update, handle dict and list
         """
         for key, value in update_dict.items():
             if key in base_dict:
                 if isinstance(base_dict[key], dict) and isinstance(value, dict):
-                    # 递归处理字典
+                    # recursively handle dict
                     update(base_dict[key], value)
                 elif isinstance(base_dict[key], list) and isinstance(value, list):
-                    # 列表直接替换（或者可以选择合并）
+                    # list directly replace (or choose to merge)
                     base_dict[key] = value
-                    # 如果要合并列表：base_dict[key].extend(value)
+                    # if you want to merge lists: base_dict[key].extend(value)
                 else:
-                    # 其他类型直接覆盖
+                    # other types directly overwrite
                     base_dict[key] = value
             else:
                 base_dict[key] = value

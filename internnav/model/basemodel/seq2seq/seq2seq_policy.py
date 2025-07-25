@@ -65,13 +65,13 @@ class Seq2SeqNet(PreTrainedModel):
         if config is None:
             config = cls.config_class.from_pretrained(pretrained_model_name_or_path, **kwargs)
 
-        # 如果 config 是 pydantic 模型，转换为 CMAModelConfig
+        # if config is a pydantic model, convert to CMAModelConfig
         if hasattr(config, 'model_dump'):
             config = cls.config_class(model_cfg=config)
 
         model = cls(config)
 
-        # 加载预训练权重
+        # load pretrained weights
         if os.path.isdir(pretrained_model_name_or_path):
             model.load_state_dict(torch.load(os.path.join(pretrained_model_name_or_path, 'pytorch_model.bin')))
         elif pretrained_model_name_or_path is None or len(pretrained_model_name_or_path) == 0:

@@ -16,8 +16,8 @@ class NavDPTrainer(BaseTrainer):
         self.writer = None
         # self.iterations = config.checkpoint * 141
         self.start_time = time.time()
-        # 添加设备属性
-        if hasattr(self.model, 'module'):  # DDP包装的模型
+        # add device attribute
+        if hasattr(self.model, 'module'):  # DDP wrapped model
             self.model_device = self.model.module.device
         else:
             self.model_device = self.model.device
@@ -25,15 +25,14 @@ class NavDPTrainer(BaseTrainer):
         print(f"[Rank {dist.get_rank() if dist.is_initialized() else 0}] Model device: {self.model_device}")
     
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
-        # 获取模型设备
-        # print(f"compute_loss里的模型参数model_parameters是:{model.parameters()}")
+        # get model device
         model_device = next(model.parameters()).device
         
-        # 确保所有输入在模型设备上
+        # ensure all inputs are on the model device
         inputs_on_device = {}
         for key, value in inputs.items():
             if torch.is_tensor(value):
-                # 使用 non_blocking=True 提高效率
+                # use non_blocking=True to improve efficiency
                 inputs_on_device[key] = value.to(model_device, non_blocking=True)
             else:
                 inputs_on_device[key] = value
@@ -48,16 +47,13 @@ class NavDPTrainer(BaseTrainer):
         if parent:
             children = parent.children()
             if len(children) == 8:
-                print("有8个训练进程在运行")
+                print("There are 8 training processes running")
             else:
-                print(f"有{len(children)}个训练进程在运行")
+                print(f"There are {len(children)} training processes running")
         else:
-            print("无法确定父进程")
-        # for key, value in inputs_on_device.items():
-        #     if torch.is_tensor(value):
-        #         print(f"  {key}: {value.device}")
+            print("Cannot determine parent process")
         
-        # 确保所有输入在模型设备上
+        # Ensure all inputs are on the model device
         inputs_on_device = {
             "batch_pg": inputs["batch_pg"].to(model_device),
             "batch_ig": inputs["batch_ig"].to(model_device),
@@ -70,7 +66,7 @@ class NavDPTrainer(BaseTrainer):
         }
         torch.cuda.synchronize(model_device)
         
-        # 解包输入数据并移动到设备
+        # unpack input data and move to device
         # batch_pg = inputs["batch_pg"]
         # batch_ig = inputs["batch_ig"]
         # batch_rgb = inputs["batch_rgb"]
@@ -122,10 +118,10 @@ class NavDPTrainer(BaseTrainer):
         return (loss, outputs) if return_outputs else loss
 
     def create_optimizer(self):
-        """创建并返回优化器"""
+        """create and return optimizer"""
         rank = dist.get_rank() if dist.is_initialized() else 0
         
-        # 获取学习率
+        # get learning rate
         try:
             lr = self.config.il.lr
             if rank == 0:
@@ -135,13 +131,13 @@ class NavDPTrainer(BaseTrainer):
             if rank == 0:
                 print(f"[Rank 0] Warning: Using default learning rate: {lr}")
         
-        # 确保模型在正确设备上
+        # Ensure the model is on the correct device
         if hasattr(self.model, 'module'):
             model_for_optim = self.model.module
         else:
             model_for_optim = self.model
             
-        # 创建优化器
+        # Create optimizer
         optimizer = torch.optim.Adam(
             model_for_optim.parameters(), 
             lr=lr
@@ -157,7 +153,7 @@ class NavDPTrainer(BaseTrainer):
         return optimizer
     
     def create_scheduler(self, optimizer, num_training_steps: int):
-        """创建学习率调度器"""
+        """Create learning rate scheduler"""
         scheduler = torch.optim.lr_scheduler.LinearLR(
             optimizer,
             start_factor=1.0,
@@ -167,13 +163,13 @@ class NavDPTrainer(BaseTrainer):
         return scheduler
     
     def create_optimizer_and_scheduler(self, num_training_steps: int):
-        """覆盖父类方法，完全控制创建过程"""
-        print("\n=== 创建优化器和调度器 ===")
+        """override parent class method, completely control the creation process"""
+        print("\n=== create optimizer and scheduler ===")
         
-        # 创建优化器
+        # create optimizer
         self.optimizer = self.create_optimizer()
         
-        # 创建调度器（注意参数顺序）
+        # create scheduler (note the parameter order)
         self.lr_scheduler = self.create_scheduler(self.optimizer, num_training_steps)
         
         return self.optimizer, self.lr_scheduler

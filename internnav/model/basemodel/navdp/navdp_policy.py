@@ -22,7 +22,7 @@ class NavDPModelConfig(PretrainedConfig):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # 传入navdp_exp_cfg
+        # pass in navdp_exp_cfg
         self.model_cfg = kwargs.get('model_cfg', None)
 
 
@@ -42,14 +42,14 @@ class NavDPNet(PreTrainedModel):
         if config is None:
             config = cls.config_class.from_pretrained(pretrained_model_name_or_path, **kwargs)
 
-        # 如果 config 是 pydantic 模型，转换为 NavDPModelConfig
+        # if config is a pydantic model, convert to NavDPModelConfig
         if hasattr(config, 'model_dump'):
             config = cls.config_class(model_cfg=config)
 
-        model = cls(config)#NavDPNet(navdp_exp_cfg_dict_NavDPModelConfig)初始化
+        model = cls(config)
         model.to(model._device)
 
-        # 加载预训练权重
+        # load pretrained weights
         if os.path.isdir(pretrained_model_name_or_path):
             incompatible_keys, _ = model.load_state_dict(
                 torch.load(os.path.join(pretrained_model_name_or_path, 'pytorch_model.bin'))
@@ -76,15 +76,6 @@ class NavDPNet(PreTrainedModel):
             self.model_config = config
 
         self.config.model_cfg['il']
-        # self.config.model_cfg = {
-        #     'name': 'navdp_train',
-        #     'model_name': 'navdp',
-        #     'torch_gpu_id': 0,
-        #     'eval': { ... },  # EvalCfg 字段的字典表示
-        #     'il': { ... },    # IlCfg 字段的字典表示
-        #     'model': { ... }, # navdp_cfg 的字典表示
-        #     ...
-        # }
 
         self._device = torch.device(f"cuda:{config.model_cfg['local_rank']}")
         self.image_size = self.config.model_cfg['il']['image_size']
@@ -128,18 +119,19 @@ class NavDPNet(PreTrainedModel):
         self.tgt_mask = self.tgt_mask.to(self._device)
         self.cond_critic_mask = self._create_cond_critic_mask()
         # self.to(self._device)
+
     def _create_cond_critic_mask(self):
-        # 创建缓冲区但不指定设备
+        # create buffer but not specify device
         return torch.ones((self.predict_size,2 + self.memory_size * 16), dtype=torch.bool)
     
     def to(self, device, *args, **kwargs):
-        # 首先调用父类的 to 方法
+        # first call the to method of the parent class
         self = super().to(device, *args, **kwargs)
         
-        # 确保缓冲区也在正确设备上
+        # ensure the buffer is on the correct device
         self.cond_critic_mask = self.cond_critic_mask.to(device)
         
-        # 更新设备属性
+        # update device attribute
         self._device = device
         
         return self    
@@ -180,15 +172,15 @@ class NavDPNet(PreTrainedModel):
         return critic_output
         
     def forward(self,goal_point,goal_image,input_images,input_depths,output_actions,augment_actions):
-        # """安全获取设备"""
-        # # 安全获取设备
+        # """get device safely"""
+        # # get device safely
         # try:
-        #     # 尝试通过模型参数获取设备
+        #     # try to get device through model parameters
         #     device = next(self.parameters()).device
         # except StopIteration:
-        #     # 模型没有参数，使用默认设备
+        #     # model has no parameters, use the default device 
         #     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        # # 移动所有输入到模型设备
+        # # move all inputs to model device
         # goal_point = goal_point.to(device)
         # goal_image = goal_image.to(device)
         # input_images = input_images.to(device)
@@ -196,7 +188,7 @@ class NavDPNet(PreTrainedModel):
         # output_actions = output_actions.to(device)
         # augment_actions = augment_actions.to(device)
         # device = self._device
-        # print(f"self.parameters()是:{self.parameters()}")
+        # print(f"self.parameters() is:{self.parameters()}")
         device = next(self.parameters()).device
         
         assert input_images.shape[1] == self.memory_size
@@ -256,22 +248,22 @@ class NavDPNet(PreTrainedModel):
         return noise_pred_ng,noise_pred_pg,cr_label_pred,cr_augment_pred,[ng_noise,pg_noise]
     
     def _get_device(self):
-        """安全获取设备信息"""
-        # 尝试通过模型参数获取设备
+        """Safe get device information"""
+        # try to get device through model parameters
         try:
             for param in self.parameters():
                 return param.device
         except StopIteration:
             pass
         
-        # 尝试通过缓冲区获取设备
+        # try to get device through buffer
         try:
             for buffer in self.buffers():
                 return buffer.device
         except StopIteration:
             pass
         
-        # 尝试通过子模块获取设备
+        # try to get device through submodule
         for module in self.children():
             try:
                 for param in module.parameters():
@@ -279,7 +271,7 @@ class NavDPNet(PreTrainedModel):
             except StopIteration:
                 continue
         
-        # 最后回退到默认设备
+        # finally revert to default device
         return torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     def predict_pointgoal_batch_action_vel(self,goal_point,input_images,input_depths,sample_num=32):

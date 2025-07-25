@@ -35,7 +35,7 @@ def load_checkpoint(checkpoint_path, *args, map_location='cpu', **kwargs):
     try:
         return torch.load(checkpoint_path, map_location=map_location, *args, **kwargs)
     except ModuleNotFoundError as e:
-        # 使用 pickle_module 来避免模块依赖问题
+        # use pickle_module to avoid module dependency problem
         return torch.load(
             checkpoint_path,
             map_location=map_location,
