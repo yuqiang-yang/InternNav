@@ -113,12 +113,6 @@ class InternVLAN1ForCausalLM(Qwen2_5_VLForConditionalGeneration, InternVLAN1Meta
         rope_deltas: Optional[torch.LongTensor] = None,
         cache_position: Optional[torch.LongTensor] = None,
         second_per_grid_ts: Optional[torch.Tensor] = None,
-        cur_images: Optional[torch.Tensor] = None,
-        cur_depths: Optional[torch.Tensor] = None,
-        pix_goal_images: Optional[torch.Tensor] = None,
-        pix_goal_depths: Optional[torch.Tensor] = None,
-        relative_poses: Optional[torch.Tensor] = None,
-        goal_label_dp: Optional[torch.Tensor] = None
     ) -> Union[Tuple, CausalLMOutputWithPast]:
         r"""
             labels (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
