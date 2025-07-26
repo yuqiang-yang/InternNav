@@ -1,9 +1,8 @@
 import sys
-
+import os
 import numpy as np
 from pydantic import BaseModel
 from internutopia.core.config.distribution import RayDistributionCfg
-from internutopia.macros import gm
 from internnav.configs.model import cma_cfg, rdp_cfg, seq2seq_cfg, internvla_n1_cfg
 
 from internnav.projects.internutopia_vln_extension.configs.controllers.stand_still import (
@@ -13,7 +12,6 @@ from internnav.projects.internutopia_vln_extension.configs.robots.h1 import (
     vln_move_by_speed_cfg as h1_vln_move_by_speed_cfg,
 )
 from internnav.projects.internutopia_vln_extension.configs.sensors.vln_camera import VLNCameraCfg
-from internnav.configs.agent import AgentCfg
 from internnav.configs.evaluator import (
     ControllerCfg,
     EnvCfg,
@@ -163,7 +161,8 @@ def get_config(evaluator_cfg: EvalCfg):
     if evaluator_cfg.task.robot_name == 'h1':
         move_by_speed_cfg = h1_vln_move_by_speed_cfg.model_dump()
         robot_type = 'VLNH1Robot'
-        robot_usd_path = gm.ASSET_PATH + evaluator_cfg.task.robot_usd_path
+        robot_usd_path = evaluator_cfg.task.robot_usd_path
+        h1_vln_move_by_speed_cfg.policy_weights_path = os.path.dirname(robot_usd_path) + '/policy/move_by_speed/h1_loco_jit_policy.pt'
         camera_resolution = evaluator_cfg.task.camera_resolution
         robot_offset = np.array([0.0, 0.0, 1.05])
         camera_prim_path = evaluator_cfg.task.camera_prim_path

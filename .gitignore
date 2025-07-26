@@ -146,3 +146,4 @@ logs/
 *.png
 *.ckpt
 /results/
+checkpoints
