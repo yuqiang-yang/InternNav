@@ -111,18 +111,10 @@ class RDPTrainer(BaseTrainer):
         if self.config.model.diffusion_policy.pred_type == 'epsilon' and self.config.model.diffusion_policy.use:
             # pred noise
             f_loss = F.mse_loss(noise_pred, noise, reduction='none')
-            if self.config.model.diffusion_policy.stop_weight > 0:
-                stop_weights = batch['observations']['stop_weights']
-                stop_weights = stop_weights.to(noise_pred.device).unsqueeze(-1).unsqueeze(-1)
-                f_loss = f_loss * stop_weights
             diffusion_loss = action_reduce(masks_unsqueeze, f_loss)
         elif self.config.model.diffusion_policy.pred_type == 'sample' or not self.config.model.diffusion_policy.use:
             # pred x_0
             f_loss = F.mse_loss(noise_pred, observations_batch['actions'], reduction='none')
-            if self.config.model.diffusion_policy.stop_weight > 0:
-                stop_weights = batch['observations']['stop_weights']
-                stop_weights = stop_weights.to(noise_pred.device)
-                f_loss = f_loss * stop_weights
             diffusion_loss = action_reduce(masks_unsqueeze, f_loss)
 
         # Aux loss

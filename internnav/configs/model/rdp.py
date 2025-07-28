@@ -105,7 +105,6 @@ rdp_cfg = ModelCfg(
         txt_len=80,
         waypoint_spacing=1,
         len_traj_pred=8,
-        stop_weight=1,
     ),
     distance_predictor=DistancePredictor(
         use=False,
@@ -252,7 +251,6 @@ rdp_eval_cfg = ModelCfg(
         txt_len=80,
         waypoint_spacing=1,
         len_traj_pred=8,
-        stop_weight=1,
     ),
     distance_predictor=DistancePredictor(
         use=False,

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Default values
-NAME=navdp_train_debug
-MODEL=navdp
+NAME=rdp_train
+MODEL=rdp
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -32,7 +32,15 @@ case $MODEL in
         export CUDA_VISIBLE_DEVICES=0
         NUM_GPUS=1
         ;;
+    "cma_plus")
+        export CUDA_VISIBLE_DEVICES=0
+        NUM_GPUS=1
+        ;;
     "seq2seq")
+        export CUDA_VISIBLE_DEVICES=0
+        NUM_GPUS=1
+        ;;
+    "seq2seq_plus")
         export CUDA_VISIBLE_DEVICES=0
         NUM_GPUS=1
         ;;
@@ -53,17 +61,26 @@ if [[ -z $NUM_GPUS ]]; then
 fi
 
 
-echo "Using torchrun to start $MODEL training, using $NUM_GPUS GPUs (CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES)"
 export TORCH_SHOW_CPP_STACKTRACES=1
 export TORCH_CPP_LOG_LEVEL=INFO
 export NCCL_DEBUG=INFO
-torchrun \
-    --nproc_per_node=$NUM_GPUS \
-    --master_port=29500 \
-    --nnodes=1 \
-    --node_rank=0 \
-    --master_addr=localhost \
-    --master_port=12345 \
-    scripts/train/train.py \
-    --name "$NAME" \
-    --model-name "$MODEL"
+
+# Check if model is rdp to use python, otherwise use torchrun
+if [[ "$MODEL" == "navdp" ]]; then
+    echo "Using torchrun to start $MODEL training, using $NUM_GPUS GPUs (CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES)"
+    torchrun \
+        --nproc_per_node=$NUM_GPUS \
+        --master_port=29500 \
+        --nnodes=1 \
+        --node_rank=0 \
+        --master_addr=localhost \
+        --master_port=12345 \
+        scripts/train/train.py \
+        --name "$NAME" \
+        --model-name "$MODEL"
+else
+    echo "Using python to start $MODEL training, using $NUM_GPUS GPUs (CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES)"
+    python scripts/train/train.py \
+        --name "$NAME" \
+        --model-name "$MODEL"
+fi

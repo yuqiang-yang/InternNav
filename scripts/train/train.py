@@ -201,6 +201,7 @@ def main(config, model_class, model_config_class):
                 dataset_root_dir = config.il.dataset_r2r_root_dir
                 dataset_type = 'r2r'
             train_dataset_data = load_dataset(dataset_root_dir, 'train', logger=train_logger, dataset_type=dataset_type)
+            global_batch_size = config.il.batch_size * len(config.torch_gpu_ids)
 
         # ------------ data_loader ------------
         if config.model_name in ['cma', 'seq2seq']:
@@ -224,7 +225,7 @@ def main(config, model_class, model_config_class):
                 dataset_data=train_dataset_data,
                 batch_size=config.il.batch_size,  
             )
-            collate_fn = rdp_collate_fn
+            collate_fn = rdp_collate_fn(global_batch_size=global_batch_size)
         elif config.model_name == 'navdp':
             policy_trainer = NavDPTrainer
             train_dataset = train_dataset_data

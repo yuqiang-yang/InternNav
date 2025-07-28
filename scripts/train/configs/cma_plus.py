@@ -25,7 +25,7 @@ cma_plus_exp_cfg = ExpCfg(
         step_interval=50,
     ),
     il=IlCfg(
-        epochs=80,
+        epochs=55,
         save_interval_epochs=5,
         batch_size=2,
         lr=1e-4,
