@@ -13,7 +13,7 @@ srun -p efm_t \
     --cpus-per-task=16 \
     --kill-on-bad-exit=1 \
     python scripts/eval/eval_habitat.py \
-    --model_path /path/to/${MID_RUN_NAME} \
+    --model_path checkpoints/${MID_RUN_NAME} \
     --predict_step_nums 32 \
     --continuous_traj \
     --output_path results/$MID_RUN_NAME/val_unseen_32traj_8steps \
