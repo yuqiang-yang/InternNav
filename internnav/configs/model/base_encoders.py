@@ -116,7 +116,6 @@ class DiffusionPolicy(BaseModel, extra='allow'):
     txt_len: Optional[int]
     waypoint_spacing: Optional[int]
     len_traj_pred: Optional[int]
-    stop_weight: Optional[int]
 
 
 class DistancePredictor(BaseModel, extra='allow'):

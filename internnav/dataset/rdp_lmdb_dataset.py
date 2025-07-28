@@ -260,7 +260,6 @@ class RDP_LmdbDataset(BaseDataset):
 
                 # add stop_progress
                 item_obs['stop_progress'] = (np.arange(total_steps) + 1) / total_steps
-                item_obs['stop_weights'] = np.ones(total_steps)
 
                 for k, v in item_obs.items():
                     item_obs[k] = torch.from_numpy(np.array(item_obs[k]))
@@ -325,10 +324,6 @@ class RDP_LmdbDataset(BaseDataset):
                     if step_idx > 0:
                         prev_action_deltas = get_delta(prev_actions)
                         item_obs['prev_actions'][step_idx] = normalize_data(prev_action_deltas, self.action_stats)
-
-                    if self.config.model.diffusion_policy.stop_weight > 0:
-                        if step_idx >= total_steps - 4:  # Increase weight for actions in the last four steps
-                            item_obs['stop_weights'][step_idx] = self.config.model.diffusion_policy.stop_weight
 
             sort_priority = list(range(len(lengths)))
             random.shuffle(sort_priority)

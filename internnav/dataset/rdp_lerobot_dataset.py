@@ -5,6 +5,7 @@ import lmdb
 import msgpack_numpy
 import numpy as np
 import torch
+import copy
 from PIL import Image
 from torchvision.transforms import (
     CenterCrop,
@@ -241,7 +242,6 @@ class RDP_LerobotDataset(BaseDataset):
 
                 # add stop_progress
                 item_obs['stop_progress'] = (np.arange(total_steps) + 1) / total_steps
-                item_obs['stop_weights'] = np.ones(total_steps)
 
                 for k, v in item_obs.items():
                     item_obs[k] = torch.from_numpy(np.array(item_obs[k]))
@@ -306,10 +306,6 @@ class RDP_LerobotDataset(BaseDataset):
                     if step_idx > 0:
                         prev_action_deltas = get_delta(prev_actions)
                         item_obs['prev_actions'][step_idx] = normalize_data(prev_action_deltas, self.action_stats)
-
-                    if self.config.model.diffusion_policy.stop_weight > 0:
-                        if step_idx >= total_steps - 4:  # Increase weight for actions in the last four steps
-                            item_obs['stop_weights'][step_idx] = self.config.model.diffusion_policy.stop_weight
 
             sort_priority = list(range(len(lengths)))
             random.shuffle(sort_priority)
@@ -393,60 +389,70 @@ class RDP_LerobotDataset(BaseDataset):
         return self
 
 
-def rdp_collate_fn(batch):
-    def _pad_helper(t, max_len, fill_val=0, return_masks=False):
-        pad_amount = max_len - t.size(0)
-        if pad_amount == 0:
+def rdp_collate_fn(global_batch_size=None):
+    def _rdp_collate_fn(batch):
+        def _pad_helper(t, max_len, fill_val=0, return_masks=False):
+            pad_amount = max_len - t.size(0)
+            if pad_amount == 0:
+                if return_masks:
+                    mask = torch.ones(max_len, dtype=torch.int)
+                    return t, mask
+                return t
+
+            pad = torch.full_like(t[0:1], fill_val).expand(pad_amount, *t.size()[1:])
+
+            # Create the mask: 1 for original tokens, 0 for padding
             if return_masks:
-                mask = torch.ones(max_len, dtype=torch.int)
-                return t, mask
-            return t
+                mask = torch.zeros(max_len, dtype=torch.int)
+                mask[: t.size(0)] = 1  # Original tokens
+                mask[t.size(0) :] = 0  # Padded tokens
 
-        pad = torch.full_like(t[0:1], fill_val).expand(pad_amount, *t.size()[1:])
+                return torch.cat([t, pad], dim=0), mask
+            return torch.cat([t, pad], dim=0)
 
-        # Create the mask: 1 for original tokens, 0 for padding
-        if return_masks:
-            mask = torch.zeros(max_len, dtype=torch.int)
-            mask[: t.size(0)] = 1  # Original tokens
-            mask[t.size(0) :] = 0  # Padded tokens
+        observations_batch = batch
 
-            return torch.cat([t, pad], dim=0), mask
-        return torch.cat([t, pad], dim=0)
+        B = torch.tensor(len(observations_batch))
+        if B < global_batch_size:
+            while B < global_batch_size:
+                sample_to_copy = random.choice(batch)
+                observations_batch.append(copy.deepcopy(sample_to_copy))
+                B = torch.tensor(len(observations_batch))
+        B = torch.tensor(len(observations_batch))
 
-    observations_batch = batch
+        new_observations_batch = defaultdict(list)
+        for sensor in observations_batch[0].keys():
+            for bid in range(B):
+                new_observations_batch[sensor].append(observations_batch[bid][sensor])
 
-    B = torch.tensor(len(observations_batch))
+        observations_batch = new_observations_batch
 
-    new_observations_batch = defaultdict(list)
-    for sensor in observations_batch[0].keys():
+        max_traj_len = max(ele.size(0) for ele in observations_batch['progress'])
+        not_done_masks_batch = torch.ones(B, max_traj_len, dtype=torch.uint8)
         for bid in range(B):
-            new_observations_batch[sensor].append(observations_batch[bid][sensor])
+            for sensor in observations_batch:
+                if sensor == 'progress':
+                    observations_batch[sensor][bid] = _pad_helper(
+                        observations_batch[sensor][bid], max_traj_len, fill_val=1.0
+                    )
+                else:
+                    observations_batch[sensor][bid] = _pad_helper(
+                        observations_batch[sensor][bid], max_traj_len, fill_val=0.0
+                    )
 
-    observations_batch = new_observations_batch
-
-    max_traj_len = max(ele.size(0) for ele in observations_batch['progress'])
-    not_done_masks_batch = torch.ones(B, max_traj_len, dtype=torch.uint8)
-    for bid in range(B):
         for sensor in observations_batch:
-            if sensor == 'progress':
-                observations_batch[sensor][bid] = _pad_helper(
-                    observations_batch[sensor][bid], max_traj_len, fill_val=1.0
-                )
-            else:
-                observations_batch[sensor][bid] = _pad_helper(
-                    observations_batch[sensor][bid], max_traj_len, fill_val=0.0
-                )
+            observations_batch[sensor] = torch.stack(observations_batch[sensor], dim=1)
+            observations_batch[sensor] = observations_batch[sensor].view(-1, *observations_batch[sensor].size()[2:])
 
-    for sensor in observations_batch:
-        observations_batch[sensor] = torch.stack(observations_batch[sensor], dim=1)
-        observations_batch[sensor] = observations_batch[sensor].view(-1, *observations_batch[sensor].size()[2:])
-
-    observations_batch = ObservationsDict(observations_batch)
-    # Expand B to match the flattened batch size
-    B_expanded = B.repeat(observations_batch['prev_actions'].shape[0]).view(-1, 1)
-    return (
-        observations_batch,
-        observations_batch['prev_actions'],
-        not_done_masks_batch.view(-1, 1),
-        B_expanded
-    )
+        observations_batch = ObservationsDict(observations_batch)
+        # Expand B to match the flattened batch size
+        B_expanded = B.repeat(observations_batch['prev_actions'].shape[0]).view(-1, 1)
+            
+        return (
+            observations_batch,
+            observations_batch['prev_actions'],
+            not_done_masks_batch.view(-1, 1),
+            B_expanded
+        )
+    
+    return _rdp_collate_fn
