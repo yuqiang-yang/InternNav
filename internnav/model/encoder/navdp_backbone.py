@@ -102,7 +102,7 @@ class DAT_RGBD_Patch_Backbone(nn.Module):
                  embed_size=512,
                  finetune=True,
                  memory_size=8,
-                 checkpoint="/path/to/depth_anything_v2_vits.pth",
+                 checkpoint="checkpoints/depth_anything_v2_vits.pth",
                  input_dtype="bf16",
                  device = 'cuda:0'):
         super().__init__()
@@ -181,7 +181,7 @@ class NavDP_RGBD_Backbone(nn.Module):
                  embed_size=512,
                  finetune=True,
                  memory_size=8,
-                 checkpoint="/path/to/depth_anything_v2_vits.pth",
+                 checkpoint="checkpoints/depth_anything_v2_vits.pth",
                  device='cuda:0'):
         super().__init__()
         # ensure the device is valid
