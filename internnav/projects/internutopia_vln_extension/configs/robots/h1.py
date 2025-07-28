@@ -5,7 +5,7 @@ from internnav.projects.internutopia_vln_extension.configs.controllers.flash_con
 vln_move_by_speed_cfg = H1MoveBySpeedControllerCfg(
     name='vln_move_by_speed',
     type='VlnMoveBySpeedController',
-    policy_weights_path=gm.ASSET_PATH + '/robots/h1/policy/move_by_speed/h1_loco_jit_policy.pt',
+    policy_weights_path='data/Embodiments/vln-pe/h1/policy/move_by_speed/h1_loco_jit_policy.pt',
     joint_names=[
         'left_hip_yaw_joint',
         'right_hip_yaw_joint',

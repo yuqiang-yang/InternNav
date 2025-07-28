@@ -102,7 +102,7 @@ class DAT_RGBD_Patch_Backbone(nn.Module):
                  embed_size=512,
                  finetune=True,
                  memory_size=8,
-                 checkpoint="/nav-oss/yangyuqiang/depth_anything_v2_vits.pth",
+                 checkpoint="/path/to/depth_anything_v2_vits.pth",
                  input_dtype="bf16",
                  device = 'cuda:0'):
         super().__init__()
@@ -181,10 +181,10 @@ class NavDP_RGBD_Backbone(nn.Module):
                  embed_size=512,
                  finetune=True,
                  memory_size=8,
-                 checkpoint="/nav-oss/yangyuqiang/depth_anything_v2_vits.pth",
+                 checkpoint="/path/to/depth_anything_v2_vits.pth",
                  device='cuda:0'):
         super().__init__()
-        # 确保设备是有效的
+        # ensure the device is valid
         if device is None:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         elif isinstance(device, int):
@@ -217,9 +217,6 @@ class NavDP_RGBD_Backbone(nn.Module):
         self.to(device)
         
     def forward(self,images,depths):
-        # print(f"images.shape是:{len(images.shape)}")
-        # print(f"depths.shape是:{depths.shape}")
-        # device = next(self.parameters()).
         device = self._get_device()
         images = images.to(device)
         depths = depths.to(device)
@@ -242,7 +239,6 @@ class NavDP_RGBD_Backbone(nn.Module):
             tensor_depths = torch.concat([tensor_depths,tensor_depths,tensor_depths],dim=1)
             depth_token = self.depth_model.get_intermediate_layers(tensor_depths)[0]
         elif len(depths.shape) == 5:
-            print(f"进入此条件")
             tensor_depths = torch.as_tensor(depths,dtype=torch.float32,device=device).permute(0,1,4,2,3)
             B,T,C,H,W = tensor_depths.shape
             tensor_depths = tensor_depths.reshape(-1,1,self.image_size,self.image_size)
@@ -254,22 +250,22 @@ class NavDP_RGBD_Backbone(nn.Module):
         memory_token = self.project_layer(memory_token)
         return memory_token
     def _get_device(self):
-        """安全获取设备信息"""
-        # 尝试通过模型参数获取设备
+        """get device safely"""
+        # try to get device through model parameters
         try:
             for param in self.parameters():
                 return param.device
         except StopIteration:
             pass
         
-        # 尝试通过缓冲区获取设备
+        # try to get device through buffer
         try:
             for buffer in self.buffers():
                 return buffer.device
         except StopIteration:
             pass
         
-        # 尝试通过子模块获取设备
+        # try to get device through submodule
         for module in self.children():
             try:
                 for param in module.parameters():
@@ -277,7 +273,7 @@ class NavDP_RGBD_Backbone(nn.Module):
             except StopIteration:
                 continue
         
-        # 最后回退到默认设备
+        # finally revert to default device
         return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class NavDP_ImageGoal_Backbone(nn.Module):

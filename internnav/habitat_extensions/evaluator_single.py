@@ -642,7 +642,7 @@ def eval():
     np.random.seed(local_rank)
     # 载入模型和 tokenizer
     tokenizer = AutoTokenizer.from_pretrained(args.model_path, use_fast=True)
-    processor = AutoProcessor.from_pretrained("/mnt/inspurfs/efm_t/weimeng/Qwen2.5-VL-7B-Instruct")
+    processor = AutoProcessor.from_pretrained("/path/to/Qwen2.5-VL-7B-Instruct")
     processor.tokenizer = tokenizer
     processor.tokenizer.padding_side = 'left'
 

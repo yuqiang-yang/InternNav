@@ -81,7 +81,7 @@ class InternVLAN1ForCausalLM(Qwen2_5_VLForConditionalGeneration, InternVLAN1Meta
 
     def __init__(self, config):
         Qwen2_5_VLForConditionalGeneration.__init__(self, config)
-        config.model_type == "InternVLAN1_qwen2.5vl"
+        config.model_type == "internvla_n1"
         
         self.model = InternVLAN1Model(config)
         self.rope_deltas = None 
@@ -113,12 +113,6 @@ class InternVLAN1ForCausalLM(Qwen2_5_VLForConditionalGeneration, InternVLAN1Meta
         rope_deltas: Optional[torch.LongTensor] = None,
         cache_position: Optional[torch.LongTensor] = None,
         second_per_grid_ts: Optional[torch.Tensor] = None,
-        cur_images: Optional[torch.Tensor] = None,
-        cur_depths: Optional[torch.Tensor] = None,
-        pix_goal_images: Optional[torch.Tensor] = None,
-        pix_goal_depths: Optional[torch.Tensor] = None,
-        relative_poses: Optional[torch.Tensor] = None,
-        goal_label_dp: Optional[torch.Tensor] = None
     ) -> Union[Tuple, CausalLMOutputWithPast]:
         r"""
             labels (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
@@ -262,31 +256,6 @@ class InternVLAN1ForCausalLM(Qwen2_5_VLForConditionalGeneration, InternVLAN1Meta
         logits = self.lm_head(hidden_states)
 
         loss = None
-        if labels is not None:
-            traj_hidden_states = []
-            for b in range(hidden_states.shape[0]):
-                traj_hidden_states.append(hidden_states[b,t_s_pos[b]:t_s_pos[b]+self.config.n_query,:])
-
-            traj_hidden_states = torch.stack(traj_hidden_states,dim=0)
-            traj_hidden_states = traj_hidden_states.unsqueeze(1).repeat(1,relative_poses.size(1),1,1).flatten(0,1)
-
-            # NavDP forward pass
-            if getattr(self.get_model(), 'navdp', None) is not None:
-                images_dp = torch.stack([pix_goal_images, cur_images], dim=1)
-                depths_dp = torch.stack([pix_goal_depths, cur_depths], dim=1).unsqueeze(-1)
-
-                pred_pg, noise = self.model.navdp.forward_vlm_traj(traj_hidden_states, 
-                                                            images_dp, 
-                                                            depths_dp, 
-                                                            vlm_mask=None, 
-                                                            tensor_label_actions=relative_poses)
-                
-                pg_action_loss = (pred_pg - noise).square().mean()
-                loss = pg_action_loss
-
-        if not return_dict:
-            output = (logits,) + outputs[1:]
-            return (loss,) + output if loss is not None else output
 
         return CausalLMOutputWithPast(
             loss=loss,

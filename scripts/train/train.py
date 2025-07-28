@@ -27,25 +27,22 @@ from internnav.model import (
 from internnav.model.utils.logger import MyLogger
 from internnav.model.utils.utils import load_dataset
 from internnav.trainer import CMATrainer, RDPTrainer, NavDPTrainer
-from scripts.train.configs import cma_exp_cfg, rdp_exp_cfg, seq2seq_exp_cfg, navdp_exp_cfg
-from internnav.trainer.base import BaseTrainer
-from torch.utils.data.distributed import DistributedSampler
-from torch.utils.data import DataLoader
-from PIL import Image
-import numpy as np
-import argparse
-import matplotlib.pyplot as plt
-import matplotlib
-import time
+from scripts.train.configs import (
+    cma_exp_cfg,
+    cma_plus_exp_cfg,
+    rdp_exp_cfg,
+    seq2seq_exp_cfg,
+    seq2seq_plus_exp_cfg,
+    navdp_exp_cfg,
+)
 import sys
 from datetime import datetime
-matplotlib.use('Agg')
 
 class TrainCfg(BaseModel):
     """Training configuration class"""
 
     name: str = 'cma_train'  # Experiment name
-    model_name: str = 'cma'  # Model name, options: 'cma', 'seq2seq', 'rdp', 'navdp'
+    model_name: str = 'cma'  # Model name, options: 'cma', 'cma_plus', 'seq2seq', 'seq2seq_plus', 'rdp', 'navdp'
 
 
 class CheckpointFormatCallback(TrainerCallback):
@@ -69,13 +66,6 @@ class CheckpointFormatCallback(TrainerCallback):
         if state.is_world_process_zero:
             checkpoint_dir = Path(args.output_dir) / f'checkpoint-{state.global_step}'  # noqa: F841
 
-            # Copy experiment config directory if provided
-
-
-#####################################################################################
-# main training function
-#####################################################################################
-
 
 def _make_dir(config):
     config.tensorboard_dir = config.tensorboard_dir % config.name  
@@ -83,43 +73,42 @@ def _make_dir(config):
     config.log_dir = config.log_dir % config.name
     config.output_dir = config.output_dir % config.name
     if not os.path.exists(config.tensorboard_dir):
-        os.makedirs(config.tensorboard_dir)
+        os.makedirs(config.tensorboard_dir,exist_ok=True)
     if not os.path.exists(config.checkpoint_folder):
-        os.makedirs(config.checkpoint_folder)
+        os.makedirs(config.checkpoint_folder,exist_ok=True)
     if not os.path.exists(config.log_dir):
-        os.makedirs(config.log_dir)
+        os.makedirs(config.log_dir,exist_ok=True)
 
 
-def main(config, model_class, model_config_class):#config是exp_cfg(包括基础配置和实验、验证配置)，参考/cpfs/user/yangyuqiang/longyilin/internnav/scripts/train/configs/cma.py
+def main(config, model_class, model_config_class):
     try:
         """Main training function."""
         _make_dir(config)
-        # local_rank = int(os.environ.get('LOCAL_RANK', 0))
-        # config.local_rank = local_rank
-        print(f"=== 启动训练 ===")
-        print(f"当前时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"PyTorch版本: {torch.__version__}")
-        print(f"CUDA可用: {torch.cuda.is_available()}")
-        print(f"CUDA设备数量: {torch.cuda.device_count()}")
-        print(f"环境变量:")
-        print(f"  RANK: {os.getenv('RANK', '未设置')}")
-        print(f"  LOCAL_RANK: {os.getenv('LOCAL_RANK', '未设置')}")
-        print(f"  WORLD_SIZE: {os.getenv('WORLD_SIZE', '未设置')}")
-        print(f"  MASTER_ADDR: {os.getenv('MASTER_ADDR', '未设置')}")
-        print(f"  MASTER_PORT: {os.getenv('MASTER_PORT', '未设置')}")
+
+        print(f"=== Start training ===")
+        print(f"Current time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"PyTorch version: {torch.__version__}")
+        print(f"CUDA available: {torch.cuda.is_available()}")
+        print(f"CUDA device count: {torch.cuda.device_count()}")
+        print(f"Environment variables:")
+        print(f"  RANK: {os.getenv('RANK', 'Not set')}")
+        print(f"  LOCAL_RANK: {os.getenv('LOCAL_RANK', 'Not set')}")
+        print(f"  WORLD_SIZE: {os.getenv('WORLD_SIZE', 'Not set')}")
+        print(f"  MASTER_ADDR: {os.getenv('MASTER_ADDR', 'Not set')}")
+        print(f"  MASTER_PORT: {os.getenv('MASTER_PORT', 'Not set')}")
+
         if config.model_name == "navdp":
             local_rank = int(os.getenv('LOCAL_RANK', '0'))
             world_size = int(os.getenv('WORLD_SIZE', '1'))
             rank = int(os.getenv('RANK', '0'))
             
-            # 设置每个进程的 CUDA 设备
+            # Set CUDA device for each process
             device_id = local_rank
             torch.cuda.set_device(device_id)
             device = torch.device(f'cuda:{device_id}')
             print(f"World size: {world_size}, Local rank: {local_rank}, Global rank: {rank}")
-
             
-            # 初始化分布式训练环境
+            # Initialize distributed training environment
             if world_size > 1:
                 try:
                     dist.init_process_group(
@@ -131,12 +120,13 @@ def main(config, model_class, model_config_class):#config是exp_cfg(包括基础
                     print("Distributed initialization SUCCESS")
                 except Exception as e:
                     print(f"Distributed initialization FAILED: {str(e)}")
-                    world_size = 1  # 回退到单GPU
-            # 打印分布式状态
+                    world_size = 1
+
             print("="*50)
             print("After distributed init:")
             print(f"LOCAL_RANK: {local_rank}")
             print(f"WORLD_SIZE: {world_size}")
+
         if dist.is_initialized():
             print(f"Dist WORLD_SIZE: {dist.get_world_size()}")
             print(f"Dist RANK: {dist.get_rank()}")
@@ -144,22 +134,24 @@ def main(config, model_class, model_config_class):#config是exp_cfg(包括基础
             print("Distributed NOT initialized")
 
         # ------------ load model ------------
-        model_cfg = model_config_class(model_cfg=config.model_dump())#把config实例转换成字典再转换成NavDPModelConfig：navdp_exp_cfg（对应navdp_exp_cfg，参照/cpfs/user/yangyuqiang/longyilin/internnav/scripts/train/configs/cma.py里的cma_exp_cfg
+        model_cfg = model_config_class(model_cfg=config.model_dump())
+        if config.il.ckpt_to_load:
+            print(f"load model from:{config.il.ckpt_to_load}")
         model = model_class.from_pretrained(pretrained_model_name_or_path=config.il.ckpt_to_load, config=model_cfg)
         if config.model_name == "navdp":
             model.to(device)
-            # 检查所有参数和缓冲区是否在正确设备上
+            # Check that all parameters and buffers are on the correct device
             for name, param in model.named_parameters():
                 if param.device != device:
-                    print(f"参数 {name} 在错误设备 {param.device} 上，应移动到 {device}")
+                    print(f"Parameter {name} is on wrong device {param.device}, should be moved to {device}")
                     param.data = param.data.to(device)
 
             for name, buffer in model.named_buffers():
                 if buffer.device != device:
-                    print(f"缓冲区 {name} 在错误设备 {buffer.device} 上，应移动到 {device}")
+                    print(f"Buffer {name} is on wrong device {buffer.device}, should be moved to {device}")
                     buffer.data = buffer.data.to(device)
             
-            # 如果是分布式训练，使用 DDP 包装模型
+            # If distributed training, wrap the model with DDP
             if world_size > 1:
                 model = torch.nn.parallel.DistributedDataParallel(
                     model,
@@ -174,14 +166,14 @@ def main(config, model_class, model_config_class):#config是exp_cfg(包括基础
                 name='train', level=logging.INFO, format_str='%(asctime)-15s %(message)s', filename=train_logger_filename
             )
         else:
-            # 其他进程使用控制台日志
+            # Other processes use console logging
             train_logger = MyLogger(
                 name='train', level=logging.INFO, format_str='%(asctime)-15s %(message)s'
             )
         transformers_logger = logging.getLogger("transformers")
         if transformers_logger.hasHandlers():
             transformers_logger.handlers = []
-        if config.model_name == "navdp" and local_rank in [0, -1]:  # 仅主进程或非分布式
+        if config.model_name == "navdp" and local_rank in [0, -1]:  # Only main process or non-distributed
             transformers_logger.addHandler(train_logger.handlers[0])
         transformers_logger.setLevel(logging.INFO)
 
@@ -209,8 +201,9 @@ def main(config, model_class, model_config_class):#config是exp_cfg(包括基础
                 dataset_root_dir = config.il.dataset_r2r_root_dir
                 dataset_type = 'r2r'
             train_dataset_data = load_dataset(dataset_root_dir, 'train', logger=train_logger, dataset_type=dataset_type)
+            global_batch_size = config.il.batch_size * len(config.torch_gpu_ids)
 
-        # data_loader
+        # ------------ data_loader ------------
         if config.model_name in ['cma', 'seq2seq']:
             policy_trainer = CMATrainer
             train_dataset = CMALerobotDataset(
@@ -232,14 +225,13 @@ def main(config, model_class, model_config_class):#config是exp_cfg(包括基础
                 dataset_data=train_dataset_data,
                 batch_size=config.il.batch_size,  
             )
-            collate_fn = rdp_collate_fn
+            collate_fn = rdp_collate_fn(global_batch_size=global_batch_size)
         elif config.model_name == 'navdp':
             policy_trainer = NavDPTrainer
             train_dataset = train_dataset_data
             collate_fn = navdp_collate_fn
 
-        # global_batch_size = config.il.batch_size  # noqa: F841
-        # 2.1 modify training args
+        # ------------ training args ------------
         training_args = TrainingArguments(
             output_dir=config.output_dir,
             run_name=config.name,
@@ -253,12 +245,7 @@ def main(config, model_class, model_config_class):#config是exp_cfg(包括基础
             dataloader_num_workers=config.il.num_workers,
             dataloader_pin_memory=False,
             optim='adamw_torch',
-            # adam_beta1=0.95,
-            # adam_beta2=0.999,
-            # adam_epsilon=1e-8,
             learning_rate=config.il.lr,
-            # weight_decay=config.il.weight_decay,
-            # warmup_ratio=config.il.warmup_ratio,
             lr_scheduler_type='cosine',
             logging_steps=10.0,
             num_train_epochs=config.il.epochs,
@@ -272,13 +259,8 @@ def main(config, model_class, model_config_class):#config是exp_cfg(包括基础
             ddp_bucket_cap_mb=100,
             torch_compile_mode=None,
             dataloader_drop_last=True,
-            # local_rank=int(os.environ.get("LOCAL_RANK", -1)),
             disable_tqdm=True,
-            # logging_level="info",
-            # logging_nan_inf_filter=False,
             log_level="info"
-            # local_rank=local_rank,  
-            # world_size=world_size,   
         )
 
         # Create the trainer
@@ -297,11 +279,11 @@ def main(config, model_class, model_config_class):#config是exp_cfg(包括基础
                 handler.flush()
     except Exception as e:
         import traceback
-        print(f"发生未捕获的异常: {str(e)}")
-        print("堆栈跟踪:")
+        print(f"Unhandled exception: {str(e)}")
+        print("Stack trace:")
         traceback.print_exc()
         
-        # 如果是分布式环境，确保所有进程都退出
+        # If distributed environment, ensure all processes exit
         if dist.is_initialized():
             dist.destroy_process_group()
         
@@ -323,7 +305,9 @@ if __name__ == '__main__':
     # Select configuration based on model_name
     supported_cfg = {
         'seq2seq': [seq2seq_exp_cfg, Seq2SeqNet, Seq2SeqModelConfig],
+        'seq2seq_plus': [seq2seq_plus_exp_cfg, Seq2SeqNet, Seq2SeqModelConfig],
         'cma': [cma_exp_cfg, CMANet, CMAModelConfig],
+        'cma_plus': [cma_plus_exp_cfg, CMANet, CMAModelConfig],
         'rdp': [rdp_exp_cfg, RDPNet, RDPModelConfig],
         'navdp': [navdp_exp_cfg, NavDPNet, NavDPModelConfig],
     }
@@ -344,9 +328,5 @@ if __name__ == '__main__':
     ), f'Number of GPUs requested ({exp_cfg.num_gpus}) is greater than the available GPUs ({available_gpus})'
     assert exp_cfg.num_gpus > 0, 'Number of GPUs must be greater than 0'
     print(f'Using {exp_cfg.num_gpus} GPUs')
-
-    # local_rank = exp_cfg.local_rank = 0
-    # device = torch.device('cuda', exp_cfg.torch_gpu_ids[0])
-    # torch.cuda.set_device(device)
 
     main(exp_cfg, model_class, model_config_class)

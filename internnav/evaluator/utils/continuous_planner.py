@@ -33,32 +33,32 @@ class AStarPlanner:
     def get_angle_cost(self, gx, gy, current, x, y):
         import math
 
-        # 计算从当前点到目标点的向量
+        # calculate the vector from current to goal
         vector_current_to_goal = (gx - current.x, gy - current.y)
 
-        # 计算从当前点到新点的向量
+        # calculate the vector from current to new point
         vector_current_to_new = (x - current.x, y - current.y)
 
-        # 计算向量的点积
+        # calculate the dot product of the two vectors
         dot_product = (
             vector_current_to_goal[0] * vector_current_to_new[0] + vector_current_to_goal[1] * vector_current_to_new[1]
         )
 
-        # 计算向量的模长
+        # calculate the magnitude of the two vectors
         magnitude_current_to_goal = math.sqrt(vector_current_to_goal[0] ** 2 + vector_current_to_goal[1] ** 2)
         magnitude_current_to_new = math.sqrt(vector_current_to_new[0] ** 2 + vector_current_to_new[1] ** 2)
 
-        # 计算夹角的余弦值
+        # calculate the cosine of the angle
         cos_theta = dot_product / (magnitude_current_to_goal * magnitude_current_to_new)
 
-        # 保证夹角余弦值在 -1 和 1 之间，防止数值误差
+        # ensure the cosine of the angle is between -1 and 1, prevent numerical errors
         cos_theta = max(-1.0, min(1.0, cos_theta))
 
-        # 计算夹角
+        # calculate the angle
         theta = math.acos(cos_theta)
 
-        # 将夹角转换为代价：夹角越大，代价越高
-        angle_cost = 100 * theta  # 你可以根据需要调整这个权重
+        # convert the angle to cost: the larger the angle, the higher the cost
+        angle_cost = 100 * theta  # you can adjust this weight as needed
 
         return angle_cost
 
@@ -73,7 +73,7 @@ class AStarPlanner:
             s_y: start y position [m]
             gx: goal x position [m]
             gy: goal y position [m]
-            min_final_meter: 像素点的个数
+            min_final_meter: number of pixels
 
         output:
             rx: x position list of the final path
@@ -167,19 +167,19 @@ class AStarPlanner:
         return points, find_flag, reason
 
     def get_cost_new(self, x, y, obs_map):
-        # 如果点在地图范围外，直接返回最大值
+        # if the point is out of the map, return the maximum value
         if x < 0 or x >= self.max_x or y < 0 or y >= self.max_y:
             return 255
 
-        # 初始化总cost和计数器
+        # initialize the total cost and counter
         total_cost = 0
         count = 0
 
-        # 遍历以(x, y)为中心的5x5区域
-        for dx in range(-2, 3):  # 从-2到2（包含）
+        # iterate the 5x5 region centered at (x, y)
+        for dx in range(-2, 3):  # from -2 to 2 (inclusive)
             for dy in range(-5, 5):
                 nx, ny = x + dx, y + dy
-                if 0 <= nx < self.max_x and 0 <= ny < self.max_y:  # 确保在地图范围内
+                if 0 <= nx < self.max_x and 0 <= ny < self.max_y:  # ensure the point is in the map
                     if obs_map[nx][ny] == 0:
                         cost = 240
                     elif obs_map[nx][ny] == 2:
@@ -189,11 +189,11 @@ class AStarPlanner:
                     total_cost += cost
                     count += 1
 
-        # 防止count为0，理论上不会发生，防御性编程
+        # prevent count from being 0, theoretically it will not happen, defensive programming
         if count == 0:
             return 255
 
-        # 返回平均值
+        # return the average value
         return total_cost // count
 
     def get_cost_old(self, x, y, obs_map):

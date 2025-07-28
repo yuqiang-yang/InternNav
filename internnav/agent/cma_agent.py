@@ -127,5 +127,5 @@ class CmaAgent(Agent):
         start = time.time()
         action = self.inference(obs)
         end = time.time()
-        print(f'总时间： {round(end-start,4)}s')
+        print(f'Time: {round(end-start,4)}s')
         return action

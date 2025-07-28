@@ -35,7 +35,7 @@ def split_data(config):
         sys.exit()
 
     lmdb_path = get_lmdb_path(name)
-    # 获取所有数据
+    # get all data
     path_key_map = {}
     count = 0
     for split_data_type in split_data_types:
@@ -57,7 +57,7 @@ def split_data(config):
 
     print(f'TOTAL:{count}')
 
-    # 划分 rank
+    # split rank
     rank_map = {}
     split_length = count // split_number
     index = -1
@@ -142,7 +142,7 @@ class ResultLogger:
 
     def write_now_result(self):
 
-        # 创建日志文件
+        # create log file
         log_content = []
 
         def log_print(content):
@@ -167,7 +167,7 @@ class ResultLogger:
                 value['path_key'] = path_key
                 data_list.append(value)
             count = len(data_list)
-            log_print(f'[split:{split}] 总共获取数据 {count} 条')
+            log_print(f'[split:{split}] total {count} data')
             total_TL = 0
             total_NE = 0
             total_osr = 0
@@ -176,17 +176,17 @@ class ResultLogger:
             reason_map = {'reach_goal': 0}
 
             for data in data_list:
-                # TL Trajectory Length (TL) - 轨迹总长度 (0)
+                # TL Trajectory Length (TL) - trajectory total length (0)
                 TL = data['info']['TL']
-                # NE Navigation Error (NE) - 当前位置到目标的欧氏距离 (-1)
+                # NE Navigation Error (NE) - Euclidean distance from current position to goal (-1)
                 NE = data['info']['NE']
                 if NE < 0:
                     NE = 0
-                # OS Oracle Success Rate (OSR) - 轨迹中是否有点达到目标(-1)
+                # OS Oracle Success Rate (OSR) - whether there is a point in the trajectory reaching the goal (-1)
                 osr = data['info']['osr']
                 if osr < 0:
                     osr = 0
-                # SR Success Rate (SR) - 是否到达目标点(0)
+                # SR Success Rate (SR) - whether the goal is reached (0)
                 success = data['info']['success']
                 # SPL (Success weighted by Path Length)(0)
                 spl = data['info']['spl']
@@ -228,7 +228,7 @@ class ResultLogger:
                 log_print(f'[{k}]:{v}')
             log_print('##########################')
 
-        # 将日志内容写入文件
+        # write log content to file
         log_file_path = os.path.join(self.lmdb_path, 'eval.log')
         log_file_path1 = f'{PROJECT_ROOT_PATH}/logs/{self.name}/eval_result.log'
         with open(log_file_path, 'w') as f:

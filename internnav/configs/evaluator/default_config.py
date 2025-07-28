@@ -1,9 +1,8 @@
 import sys
-
+import os
 import numpy as np
 from pydantic import BaseModel
 from internutopia.core.config.distribution import RayDistributionCfg
-from internutopia.macros import gm
 from internnav.configs.model import cma_cfg, rdp_cfg, seq2seq_cfg, internvla_n1_cfg
 
 from internnav.projects.internutopia_vln_extension.configs.controllers.stand_still import (
@@ -13,7 +12,6 @@ from internnav.projects.internutopia_vln_extension.configs.robots.h1 import (
     vln_move_by_speed_cfg as h1_vln_move_by_speed_cfg,
 )
 from internnav.projects.internutopia_vln_extension.configs.sensors.vln_camera import VLNCameraCfg
-from internnav.configs.agent import AgentCfg
 from internnav.configs.evaluator import (
     ControllerCfg,
     EnvCfg,
@@ -85,7 +83,7 @@ cfg = EvalCfg(
 
 
 def validate_eval_config(eval_cfg: BaseModel):
-    """专门验证评估配置的函数"""
+    """validate the evaluation config"""
 
     def check_nested_none(obj, path=''):
         none_paths = []
@@ -122,28 +120,28 @@ def validate_eval_config(eval_cfg: BaseModel):
 
 def merge_models(base_model, update_model):
     """
-    智能合并两个模型：
-    - dict类型使用dict.update()
-    - 其他类型直接覆盖
+    smart merge two models:
+    - dict type uses dict.update()
+    - other types directly overwrite
     """
     base_dict = base_model.model_dump()
     update_dict = update_model.model_dump(exclude_none=True)
 
     def update(base_dict, update_dict):
         """
-        深度更新，同时处理字典和列表
+        deep update, handle dict and list
         """
         for key, value in update_dict.items():
             if key in base_dict:
                 if isinstance(base_dict[key], dict) and isinstance(value, dict):
-                    # 递归处理字典
+                    # recursively handle dict
                     update(base_dict[key], value)
                 elif isinstance(base_dict[key], list) and isinstance(value, list):
-                    # 列表直接替换（或者可以选择合并）
+                    # list directly replace (or choose to merge)
                     base_dict[key] = value
-                    # 如果要合并列表：base_dict[key].extend(value)
+                    # if you want to merge lists: base_dict[key].extend(value)
                 else:
-                    # 其他类型直接覆盖
+                    # other types directly overwrite
                     base_dict[key] = value
             else:
                 base_dict[key] = value
@@ -163,7 +161,8 @@ def get_config(evaluator_cfg: EvalCfg):
     if evaluator_cfg.task.robot_name == 'h1':
         move_by_speed_cfg = h1_vln_move_by_speed_cfg.model_dump()
         robot_type = 'VLNH1Robot'
-        robot_usd_path = gm.ASSET_PATH + evaluator_cfg.task.robot_usd_path
+        robot_usd_path = evaluator_cfg.task.robot_usd_path
+        h1_vln_move_by_speed_cfg.policy_weights_path = os.path.dirname(robot_usd_path) + '/policy/move_by_speed/h1_loco_jit_policy.pt'
         camera_resolution = evaluator_cfg.task.camera_resolution
         robot_offset = np.array([0.0, 0.0, 1.05])
         camera_prim_path = evaluator_cfg.task.camera_prim_path

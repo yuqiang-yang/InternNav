@@ -68,26 +68,26 @@ def wrap_model(
     world_size=1,
     use_dp=False,
 ) -> torch.nn.Module:
-    if world_size > 1 and use_dp:  # DP模式
+    if world_size > 1 and use_dp:  # DP mode
         if isinstance(device, list):
             model = torch.nn.DataParallel(model, device_ids=device)
             model = model.to(device[0])
         else:
             model = torch.nn.DataParallel(model)
             model = model.to(device)
-    elif world_size > 1:  # DDP模式
-        # 确保模型在正确的GPU上
+    elif world_size > 1:  # DDP mode
+        # ensure the model is on the correct GPU
         device = torch.device(f'cuda:{local_rank}')
         model = model.to(device)
         print(f'Process {local_rank} using device: {device}')
 
         model = DDP(
             model,
-            device_ids=[local_rank],  # 使用local_rank对应的GPU
+            device_ids=[local_rank],  # use the GPU corresponding to local_rank
             output_device=local_rank,
             find_unused_parameters=True,
         )
-    else:  # 单GPU模式
+    else:  # single GPU mode
         if isinstance(device, list):
             model = model.to(device[0])
         else:

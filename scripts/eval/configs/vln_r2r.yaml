@@ -77,21 +77,3 @@ habitat:
     split: val_seen
     scenes_dir: data/scene_datasets/
     data_path: data/datasets/vln/mp3d/r2r/v1/{split}/{split}.json.gz
-
-  # dataset:
-  #   type: R2RVLN-v1
-  #   split: train
-  #   scenes_dir: data/scene_datasets/
-  #   data_path: data/datasets/vln_datasets/{split}.json.gz
-
-  # dataset:
-  #   type: R2RVLN-v1
-  #   split: scalevln
-  #   scenes_dir: /mnt/petrelfs/wanchenyang/code/ScaleVLN/data/
-  #   data_path: /mnt/petrelfs/wanchenyang/code/ScaleVLN/{split}.json.gz
-
-  # dataset:
-  #   type: R2RVLN-v1
-  #   split: rxr
-  #   scenes_dir: /mnt/petrelfs/wanchenyang/code/ScaleVLN/data/
-  #   data_path: /mnt/petrelfs/wanchenyang/code/ScaleVLN/{split}.json.gz

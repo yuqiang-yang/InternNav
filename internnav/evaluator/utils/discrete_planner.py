@@ -196,13 +196,13 @@ class AStarDiscretePlanner:
             s_y: start y position [m]
             gx: goal x position [m]
             gy: goal y position [m]
-            min_final_meter: 像素点的个数(0.25米差不多是 6 个像素)
+            min_final_meter: number of pixels (0.25 meters is about 6 pixels)
 
         output:
             rx: x position list of the final path
             ry: y position list of the final path
         """
-        # 照片里的角度跟实际角度相反
+        # the angle in the image is opposite to the actual angle
         if yaw > math.pi:
             yaw = yaw - math.pi
         else:
