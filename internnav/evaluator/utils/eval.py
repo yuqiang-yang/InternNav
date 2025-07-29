@@ -36,6 +36,8 @@ def generate_episode(dataloader: ResumablePathKeyDataloader, config: EvalCfg):
         data['name'] = dataloader.task_name
         robot_flash = getattr(config.task, "robot_flash", False)
         one_step_stand_still = getattr(config.task, "one_step_stand_still", False)
+        if config.task.metric.metric_setting['metric_config'].get('name', None) is None:
+            config.task.metric.metric_setting['metric_config']['name'] = 'default_eval_name'
         episodes.append(
             VLNEvalTaskCfg(
                 **config.task.task_settings,
