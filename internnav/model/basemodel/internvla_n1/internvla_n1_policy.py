@@ -25,7 +25,7 @@ class InternVLAN1Net(PreTrainedModel):
         )
         
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_config.model_path, use_fast=True)
-        self.processor = AutoProcessor.from_pretrained(self.model_config.qwen_path)
+        self.processor = AutoProcessor.from_pretrained(self.model_config.model_path)
         self.processor.tokenizer = self.tokenizer
         self.processor.tokenizer.padding_side = 'left'
         

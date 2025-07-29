@@ -36,6 +36,8 @@ except Exception as e:
     RAY_AVAILABLE = False
     print(f"Ray not available: {str(e)}")
 
+global instruction
+
 class VideoRequest(BaseModel):
     """
     Frontend post json object template
@@ -214,7 +216,8 @@ class BackendServer:
                     "--model_path", model_path,
                     "--predict_step_nums", "32",
                     "--continuous_traj",
-                    "--output_path", path 
+                    "--output_path", path,
+                    "--instruction", data_dict["instruction"],
                 ]
 
                 cwd = PROJECT_ROOT_PATH  
