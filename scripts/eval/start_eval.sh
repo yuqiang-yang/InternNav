@@ -14,7 +14,7 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         *)
-            echo "未知参数: $1"
+            echo "unknown parameter: $1"
             exit 1
             ;;
     esac
