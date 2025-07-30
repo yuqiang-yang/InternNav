@@ -46,7 +46,6 @@ class NavDP_Base_Datset(Dataset):
                  prior_sample=False):
         
         self.dataset_dirs = np.array([p for p in os.listdir(root_dirs)])
-        # self.dataset_dirs = np.array(["gibson_zed"]) # for debug
         self.memory_size = memory_size
         self.image_size = image_size
         self.scene_scale_size = scene_data_scale
@@ -69,20 +68,15 @@ class NavDP_Base_Datset(Dataset):
             for group_dir in self.dataset_dirs: # gibson_zed, 3dfront ...
                 all_scene_dirs = np.array([p for p in os.listdir(os.path.join(root_dirs,group_dir))])
                 select_scene_dirs = all_scene_dirs[np.arange(0,all_scene_dirs.shape[0],1/self.scene_scale_size).astype(np.int32)]
-                # select_scene_dirs = all_scene_dirs[0:1] # for debug
-                # pdb.set_trace()
                 for scene_dir in select_scene_dirs:
                     all_traj_dirs = np.array([p for p in os.listdir(os.path.join(root_dirs,group_dir,scene_dir))])
                     select_traj_dirs = all_traj_dirs[np.arange(0,all_traj_dirs.shape[0],1/self.trajectory_data_scale).astype(np.int32)]
-                    # select_traj_dirs = all_traj_dirs[0]
                     for traj_dir in tqdm(select_traj_dirs):
                         entire_task_dir = os.path.join(root_dirs,group_dir,scene_dir,traj_dir)
                         rgb_dir = os.path.join(entire_task_dir,"videos/chunk-000/observation.images.rgb/")
                         depth_dir = os.path.join(entire_task_dir,"videos/chunk-000/observation.images.depth/")
                         data_path = os.path.join(entire_task_dir,'data/chunk-000/episode_000000.parquet') # intrinsic, extrinsic, cam_traj, path
-                        # data_path = os.path.join(entire_task_dir,'data.json')
-                        # afford_path = os.path.join(entire_task_dir,'path.ply')
-                        # pdb.set_trace()
+                        afford_path = os.path.join(entire_task_dir,'data/chunk-000/path.ply')
                         rgbs_length = len([p for p in os.listdir(rgb_dir)])
                         depths_length = len([p for p in os.listdir(depth_dir)])
                         
@@ -99,13 +93,13 @@ class NavDP_Base_Datset(Dataset):
                         self.trajectory_data_dir.append(data_path)
                         self.trajectory_rgb_path.append(rgbs_path)
                         self.trajectory_depth_path.append(depths_path)
-                        # self.trajectory_afford_path.append(afford_path)
+                        self.trajectory_afford_path.append(afford_path)
                         
             save_dict = {'trajectory_dirs':self.trajectory_dirs,
                          'trajectory_data_dir':self.trajectory_data_dir,
                          'trajectory_rgb_path':self.trajectory_rgb_path,
-                         'trajectory_depth_path':self.trajectory_depth_path}
-                        #  'trajectory_afford_path':self.trajectory_afford_path}
+                         'trajectory_depth_path':self.trajectory_depth_path,
+                         'trajectory_afford_path':self.trajectory_afford_path}
             with open(preload_path,'w') as f:
                 json.dump(save_dict,f,indent=4)
         else:
@@ -114,7 +108,7 @@ class NavDP_Base_Datset(Dataset):
             self.trajectory_data_dir = load_dict['trajectory_data_dir'] * 50
             self.trajectory_rgb_path = load_dict['trajectory_rgb_path'] * 50
             self.trajectory_depth_path = load_dict['trajectory_depth_path'] * 50
-            # self.trajectory_afford_path = load_dict['trajectory_afford_path'] * 50
+            self.trajectory_afford_path = load_dict['trajectory_afford_path'] * 50
 
     def __len__(self):
         return len(self.trajectory_dirs)
@@ -167,26 +161,7 @@ class NavDP_Base_Datset(Dataset):
         camera_extrinsic = np.vstack(np.array(df['observation.camera_extrinsic'].tolist()[0])).reshape(4, 4)
         trajectory_length = len(df['action'].tolist())
         camera_trajectory = np.array([np.stack(frame) for frame in df['action']], dtype=np.float64)
-        path_points = np.array(df['observation.path_points'].tolist())
-        path_colors = np.array(df['observation.path_colors'].tolist())
-
-        path_points = np.concatenate([np.concatenate(row) for row in path_points]).reshape(-1, 3)
-        path_colors = np.concatenate([np.concatenate(row) for row in path_colors]).reshape(-1, 3)
-
-        pcd = o3d.geometry.PointCloud()
-        pcd.points = o3d.utility.Vector3dVector(np.asarray(path_points, dtype=np.float64))
-        pcd.colors = o3d.utility.Vector3dVector(np.asarray(path_colors, dtype=np.float64))
-        pcd_down = pcd.voxel_down_sample(voxel_size=0.05)
-
-        color_distance = np.abs(np.asarray(pcd_down.colors) - np.array([0,0,0])).sum(axis=-1) # sometimes, the path are saved as black points
-        # print(color_distance.shape, path_points.shape, path_colors.shape)
-        select_index = np.where(color_distance<0.05)[0]
-
-        trajectory_path = o3d.geometry.PointCloud()
-        trajectory_path.points = o3d.utility.Vector3dVector(np.asarray(pcd_down.points)[select_index])
-        trajectory_path.colors = o3d.utility.Vector3dVector(np.asarray(pcd_down.colors)[select_index])
-        return camera_intrinsic,camera_extrinsic,camera_trajectory,trajectory_length, path_points,trajectory_path
-
+        return camera_intrinsic,camera_extrinsic,camera_trajectory,trajectory_length
 
     def process_path_points(self,index):
         trajectory_pcd = self.load_pointcloud(self.trajectory_afford_path[index])
@@ -198,8 +173,8 @@ class NavDP_Base_Datset(Dataset):
         trajectory_path.colors = o3d.utility.Vector3dVector(np.asarray(trajectory_pcd.colors)[select_index])
         return np.array(trajectory_path.points),trajectory_path
     
-    def process_obstacle_points(self,index,path_points,trajectory_pcd):
-        # trajectory_pcd = self.load_pointcloud(self.trajectory_afford_path[index])
+    def process_obstacle_points(self,index,path_points):
+        trajectory_pcd = self.load_pointcloud(self.trajectory_afford_path[index])
         trajectory_color = np.array(trajectory_pcd.colors)
         trajectory_points = np.array(trajectory_pcd.points)
         color_distance = np.abs(trajectory_color - np.array([0,0,0.5])).sum(axis=-1) # the obstacles are save in blue
@@ -363,10 +338,10 @@ class NavDP_Base_Datset(Dataset):
             self._last_time = time.time()
         start_time = time.time()
     
-        camera_intrinsic,trajectory_base_extrinsic,trajectory_extrinsics,trajectory_length,trajectory_path_points,trajectory_path_pcd = self.process_data_parquet(index)
+        camera_intrinsic,trajectory_base_extrinsic,trajectory_extrinsics,trajectory_length = self.process_data_parquet(index)
 
-        # trajectory_path_points,trajectory_path_pcd = self.process_path_points(index)
-        trajectory_obstacle_points,trajectory_obstacle_pcd = self.process_obstacle_points(index,trajectory_path_points, trajectory_path_pcd)
+        trajectory_path_points,trajectory_path_pcd = self.process_path_points(index)
+        trajectory_obstacle_points,trajectory_obstacle_pcd = self.process_obstacle_points(index,trajectory_path_points)
         
         if self.prior_sample:
             pixel_start_choice,target_choice = self.rank_steps()
@@ -406,9 +381,7 @@ class NavDP_Base_Datset(Dataset):
         
         point_goal = target_xyt_actions[-1]
         image_goal = np.concatenate((self.process_image(self.trajectory_rgb_path[index][target_choice]),self.process_image(self.trajectory_rgb_path[index][memory_start_choice])),axis=-1)
-        #self.process_image(self.trajectory_rgb_path[index][target_choice])
-        # image_goal = np.concatenate((self.process_image(self.trajectory_rgb_path[index][target_choice]),self.process_image(self.trajectory_rgb_path[index][start_choice])),axis=-1)
-        # pixel_goal = self.process_pixel_from_bytes(self.trajectory_rgb_path[index][start_choice],pred_actions[-1],camera_intrinsic,trajectory_base_extrinsic)
+
         # process pixel projection
         pixel_target_local_points,_,_,_,_ = self.process_actions(trajectory_extrinsics,trajectory_base_extrinsic,pixel_start_choice,target_choice,pred_digit=pred_digit)
         pixel_init_vector = pixel_target_local_points[1] - pixel_target_local_points[0]

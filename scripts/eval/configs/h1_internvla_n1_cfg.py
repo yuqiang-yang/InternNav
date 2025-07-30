@@ -15,8 +15,7 @@ eval_cfg = EvalCfg(
         ckpt_path='',
         model_settings={
             'env_num': 1, 'sim_num': 1,
-            'qwen_path': '/path/to/Qwen2.5-VL-7B-Instruct',
-            'model_path': "/path/to/qwen_latent_ckpt/",
+            'model_path': "checkpoints/InternVLA-N1",
             'camera_intrinsic': [
                 [585.0, 0.0, 320.0], [0.0, 585.0, 240.0], [0.0, 0.0, 1.0]
             ],
@@ -52,18 +51,18 @@ eval_cfg = EvalCfg(
         },
         scene=SceneCfg(
             scene_type='mp3d',
-            mp3d_data_dir='/shared/smartbot/vln-pe/Matterport3D/data/v1/scans',
+            mp3d_data_dir='data/scene_data/mp3d_pe',
         ),
         robot_name='h1',
         robot_flash=True, # If robot_flash is True, the mode is flash (set world_pose directly); else you choose physical mode.
-        robot_usd_path='/robots/h1/h1_vln_multi_camera.usd',
+        robot_usd_path='data/Embodiments/vln-pe/h1/h1_internvla.usd',
         camera_resolution=[640, 480], # (W,H)
         camera_prim_path='torso_link/h1_1_25_down_30',
         one_step_stand_still = True, #For dual-system, please keep this param True.
     ),
     dataset=EvalDatasetCfg(
         dataset_settings={
-            'base_data_dir': '/shared/smartbot/vln-pe/data/datasets/R2R_VLNCE_v1-3_corrected',
+            'base_data_dir': 'data/vln_pe/raw_data',
             'split_data_types': ['val_unseen'],  # 'val_seen'
             'filter_stairs': True,      
             # 'selected_scans': ['zsNo4HB9uLZ'],

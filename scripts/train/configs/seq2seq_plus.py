@@ -3,8 +3,8 @@ from internnav.configs.trainer.eval import EvalCfg
 from internnav.configs.trainer.exp import ExpCfg
 from internnav.configs.trainer.il import FilterFailure, IlCfg, Loss
 
-seq2seq_exp_cfg = ExpCfg(
-    name='seq2seq_train',
+seq2seq_plus_exp_cfg = ExpCfg(
+    name='seq2seq_plus_train',
     model_name='seq2seq',
     torch_gpu_id=0,
     torch_gpu_ids=[0],
@@ -25,7 +25,7 @@ seq2seq_exp_cfg = ExpCfg(
         step_interval=50,
     ),
     il=IlCfg(
-        epochs=80,
+        epochs=55,
         save_interval_epochs=5,
         batch_size=2,
         lr=1e-4,
@@ -36,7 +36,7 @@ seq2seq_exp_cfg = ExpCfg(
         inflection_weight_coef=3.2,
         save_filter_frozen_weights=False,
         load_from_ckpt=False,
-        ckpt_to_load='',
+        ckpt_to_load='checkpoints/r2r/zero_shot/seq2seq',
         load_from_pretrain=True,
         lmdb_map_size=1e12,
         dataset_r2r_root_dir='data/vln_pe/raw_data',

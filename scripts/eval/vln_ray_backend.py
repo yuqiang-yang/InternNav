@@ -6,6 +6,7 @@ import subprocess
 import os
 import torch
 import uvicorn
+import sys
 import time
 import json
 import uuid
@@ -15,6 +16,10 @@ from pydantic import BaseModel
 # from utils.log_util import logger
 import logging
 from enum import Enum
+
+PROJECT_ROOT_PATH = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(PROJECT_ROOT_PATH)
+print(f"PROJECT_ROOT_PATH {PROJECT_ROOT_PATH}", flush=True)
 
 try:
     import ray
@@ -30,6 +35,8 @@ try:
 except Exception as e:
     RAY_AVAILABLE = False
     print(f"Ray not available: {str(e)}")
+
+global instruction
 
 class VideoRequest(BaseModel):
     """
@@ -189,8 +196,7 @@ class BackendServer:
             data_dict = json.loads(data)
             if data_dict.get("task_type") == "vln_eval":
                 print("=======VLN Eval Task=======")
-                username = os.getlogin()
-                cache_dir = f"/tmp/{username}/.triton"
+                cache_dir = f"/tmp/InternNav/.triton"
                 os.makedirs(cache_dir, exist_ok=True)
                 os.chmod(cache_dir, 0o777)  
 
@@ -201,20 +207,20 @@ class BackendServer:
                     "NCCL_SOCKET_IFNAME": "bond0",
                     "NCCL_IB_HCA": "mlx5_2,mlx5_3,mlx5_4,mlx5_5",
                     "TRITON_CACHE_DIR": cache_dir,
-                    "HF_HOME": "/path/to/hf_home"
                 })
-                model_path = "/path/to/model"
+                model_path = "checkpoints/InternVLA-N1/"
                 cmd = [
-                    "/path/to/python",
+                    "python",
                     "-u",
-                    "/path/to/InternNav/internnav/habitat_extensions/evaluator_single.py",
+                    "internnav/habitat_extensions/evaluator_single.py",
                     "--model_path", model_path,
                     "--predict_step_nums", "32",
                     "--continuous_traj",
-                    "--output_path", path 
+                    "--output_path", path,
+                    "--instruction", data_dict["instruction"],
                 ]
 
-                cwd = "/path/to/InternNav/"  
+                cwd = PROJECT_ROOT_PATH  
                 if RAY_AVAILABLE:
                     future = run_inference.remote(cmd, cwd, env)
                     self.tasks[task_id].ray_future = future
@@ -287,7 +293,7 @@ class BackendServer:
 
 
 if __name__ == "__main__":
-    output_path = f"/path/to/log/"
+    output_path = f"log/"
     print(torch.cuda.device_count())
     server = BackendServer(host="0.0.0.0", port=8001)
     server.run()

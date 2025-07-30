@@ -641,9 +641,7 @@ def eval():
     local_rank = args.local_rank
     np.random.seed(local_rank)
     # 载入模型和 tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(args.model_path, use_fast=True)
-    processor = AutoProcessor.from_pretrained("/path/to/Qwen2.5-VL-7B-Instruct")
-    processor.tokenizer = tokenizer
+    processor = AutoProcessor.from_pretrained(args.model_path)
     processor.tokenizer.padding_side = 'left'
 
     device = torch.device(f"cuda:{local_rank}")

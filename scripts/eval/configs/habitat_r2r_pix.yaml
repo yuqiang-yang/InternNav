@@ -79,5 +79,5 @@ habitat:
   dataset:
     type: R2RVLN-v1
     split: val_seen
-    scenes_dir: /path/to/scene_datasets/Matterport3D/data/v1/tasks/
-    data_path: /shared/smartbot/vln-pe/data/datasets/R2R_VLNCE_v1-3_corrected/{split}/{split}.json.gz
+    scenes_dir: data/scene_datasets/
+    data_path: data/datasets/vln/mp3d/r2r/v1/{split}/{split}.json.gz

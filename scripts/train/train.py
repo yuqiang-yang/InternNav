@@ -27,25 +27,22 @@ from internnav.model import (
 from internnav.model.utils.logger import MyLogger
 from internnav.model.utils.utils import load_dataset
 from internnav.trainer import CMATrainer, RDPTrainer, NavDPTrainer
-from scripts.train.configs import cma_exp_cfg, rdp_exp_cfg, seq2seq_exp_cfg, navdp_exp_cfg
-from internnav.trainer.base import BaseTrainer
-from torch.utils.data.distributed import DistributedSampler
-from torch.utils.data import DataLoader
-from PIL import Image
-import numpy as np
-import argparse
-import matplotlib.pyplot as plt
-import matplotlib
-import time
+from scripts.train.configs import (
+    cma_exp_cfg,
+    cma_plus_exp_cfg,
+    rdp_exp_cfg,
+    seq2seq_exp_cfg,
+    seq2seq_plus_exp_cfg,
+    navdp_exp_cfg,
+)
 import sys
 from datetime import datetime
-matplotlib.use('Agg')
 
 class TrainCfg(BaseModel):
     """Training configuration class"""
 
     name: str = 'cma_train'  # Experiment name
-    model_name: str = 'cma'  # Model name, options: 'cma', 'seq2seq', 'rdp', 'navdp'
+    model_name: str = 'cma'  # Model name, options: 'cma', 'cma_plus', 'seq2seq', 'seq2seq_plus', 'rdp', 'navdp'
 
 
 class CheckpointFormatCallback(TrainerCallback):
@@ -76,11 +73,11 @@ def _make_dir(config):
     config.log_dir = config.log_dir % config.name
     config.output_dir = config.output_dir % config.name
     if not os.path.exists(config.tensorboard_dir):
-        os.makedirs(config.tensorboard_dir)
+        os.makedirs(config.tensorboard_dir,exist_ok=True)
     if not os.path.exists(config.checkpoint_folder):
-        os.makedirs(config.checkpoint_folder)
+        os.makedirs(config.checkpoint_folder,exist_ok=True)
     if not os.path.exists(config.log_dir):
-        os.makedirs(config.log_dir)
+        os.makedirs(config.log_dir,exist_ok=True)
 
 
 def main(config, model_class, model_config_class):
@@ -138,6 +135,8 @@ def main(config, model_class, model_config_class):
 
         # ------------ load model ------------
         model_cfg = model_config_class(model_cfg=config.model_dump())
+        if config.il.ckpt_to_load:
+            print(f"load model from:{config.il.ckpt_to_load}")
         model = model_class.from_pretrained(pretrained_model_name_or_path=config.il.ckpt_to_load, config=model_cfg)
         if config.model_name == "navdp":
             model.to(device)
@@ -202,6 +201,7 @@ def main(config, model_class, model_config_class):
                 dataset_root_dir = config.il.dataset_r2r_root_dir
                 dataset_type = 'r2r'
             train_dataset_data = load_dataset(dataset_root_dir, 'train', logger=train_logger, dataset_type=dataset_type)
+            global_batch_size = config.il.batch_size * len(config.torch_gpu_ids)
 
         # ------------ data_loader ------------
         if config.model_name in ['cma', 'seq2seq']:
@@ -225,7 +225,7 @@ def main(config, model_class, model_config_class):
                 dataset_data=train_dataset_data,
                 batch_size=config.il.batch_size,  
             )
-            collate_fn = rdp_collate_fn
+            collate_fn = rdp_collate_fn(global_batch_size=global_batch_size)
         elif config.model_name == 'navdp':
             policy_trainer = NavDPTrainer
             train_dataset = train_dataset_data
@@ -305,7 +305,9 @@ if __name__ == '__main__':
     # Select configuration based on model_name
     supported_cfg = {
         'seq2seq': [seq2seq_exp_cfg, Seq2SeqNet, Seq2SeqModelConfig],
+        'seq2seq_plus': [seq2seq_plus_exp_cfg, Seq2SeqNet, Seq2SeqModelConfig],
         'cma': [cma_exp_cfg, CMANet, CMAModelConfig],
+        'cma_plus': [cma_plus_exp_cfg, CMANet, CMAModelConfig],
         'rdp': [rdp_exp_cfg, RDPNet, RDPModelConfig],
         'navdp': [navdp_exp_cfg, NavDPNet, NavDPModelConfig],
     }

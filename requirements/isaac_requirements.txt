@@ -176,3 +176,4 @@ websockets==12.0
 wrapt==1.16.0
 yarl==1.9.4
 zipp==3.23.0
+-e git+https://gitlab.pjlab.org.cn/EmbodiedAI/SimPlatform/GRUtopia.git@e91525cf74c2bfb6856df6c3933764aa4abe0089#egg=grutopia

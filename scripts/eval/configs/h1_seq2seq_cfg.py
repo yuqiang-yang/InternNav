@@ -11,7 +11,7 @@ eval_cfg = EvalCfg(
     agent=AgentCfg(
         server_port=8080,
         model_name='seq2seq',
-        ckpt_path='data/checkpoints/seq2seq/checkpoint-387159',
+        ckpt_path='checkpoints/r2r/fine_tuned/seq2seq',
         model_settings={},
     ),
     env=EnvCfg(
@@ -30,16 +30,16 @@ eval_cfg = EvalCfg(
         },
         scene=SceneCfg(
             scene_type='mp3d',
-            mp3d_data_dir='/shared/smartbot/vln-pe/Matterport3D/data/v1/scans',
+            mp3d_data_dir='data/scene_data/mp3d_pe',
         ),
         robot_name='h1',
-        robot_usd_path='/robots/h1/h1_vln_pointcloud.usd',
+        robot_usd_path='data/Embodiments/vln-pe/h1/h1_vln_pointcloud.usd',
         camera_resolution=[256,256], # (W,H)
         camera_prim_path='torso_link/h1_pano_camera_0',
     ),
     dataset=EvalDatasetCfg(
         dataset_settings={
-            'base_data_dir': 'data/datasets/R2R_VLNCE_v1-3_corrected',
+            'base_data_dir': 'data/vln_pe/raw_data',
             'split_data_types': ['val_unseen', 'val_seen'],
             'filter_stairs': True,
         },

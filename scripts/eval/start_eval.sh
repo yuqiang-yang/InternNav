@@ -6,7 +6,6 @@ source /root/miniconda3/etc/profile.d/conda.sh
 conda activate internutopia
 
 CONFIG=scripts/eval/configs/h1_cma_cfg.py
-INTERNUTOPIA_ASSETS_PATH=/shared/smartbot/datasets/GRUtopia-assets
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -14,12 +13,8 @@ while [[ $# -gt 0 ]]; do
             CONFIG="$2"
             shift 2
             ;;
-        --internutopia_assets_path)
-            INTERNUTOPIA_ASSETS_PATH="$2"
-            shift 2
-            ;;
         *)
-            echo "未知参数: $1"
+            echo "unknown parameter: $1"
             exit 1
             ;;
     esac
@@ -33,8 +28,6 @@ if [ -n "$processes" ]; then
 fi
 python internnav/agent/utils/server.py --config $CONFIG > server.log 2>&1 &
 
-
-export INTERNUTOPIA_ASSETS_PATH=$INTERNUTOPIA_ASSETS_PATH
 
 RETRY_LIMIT=5
 MONITOR_INTERVAL=60
