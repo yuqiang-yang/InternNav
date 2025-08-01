@@ -135,8 +135,42 @@ Please refer to the [documentation](https://internrobotics.github.io/user_guide/
    </tbody>
 </table>
 
+### InternVLA-N1 Results
+
+#### VLN-CE Task
+| Model  | Dataset/Benchmark | NE | OS | SR | SPL | Download |
+| ------ | ----------------- | -- | -- | --------- |  -- | --------- |
+| `InternVLA-N1 (S2)` | R2R | 5.09 | 60.9 | 53.7 | 49.7 | [Model](https://huggingface.co/InternRobotics/InternVLA-N1-S2) | 
+| `InternVLA-N1` | R2R | **4.76** | **63.4** | **56.7** | **52.6** | [Model](https://huggingface.co/InternRobotics/InternVLA-N1) | 
+| `InternVLA-N1 (S2)` | RxR | 6.39 | 60.1 | 50.5 | 43.3 | [Model](https://huggingface.co/InternRobotics/InternVLA-N1-S2) |
+| `InternVLA-N1` | RxR | **5.65** | **63.2** | **53.5** | **45.7** | [Model](https://huggingface.co/InternRobotics/InternVLA-N1) |
+
+#### VLN-PE Task
+| Model  | Dataset/Benchmark | NE | OS | SR | SPL | Download |
+| ------ | ----------------- | -- | -- | -- | --- | --- |
+| `Seq2Seq` | Flash | 8.27 | 43.0 | 15.7 | 9.7 | [Model](https://huggingface.co/InternRobotics/VLN-PE) | 
+| `CMA` | Flash | 7.52 | 45.0 | 24.4 | 18.2 | [Model](https://huggingface.co/InternRobotics/VLN-PE) | 
+| `RDP` | Flash | 6.98 | 42.5 | 24.9 | 17.5 | [Model](https://huggingface.co/InternRobotics/VLN-PE) | 
+| `InternVLA-N1` | Flash | **4.21** | **68.0** | **59.8** | **54.0** | [Model](https://huggingface.co/InternRobotics/InternVLA-N1) | 
+| `Seq2Seq` | Physical | 7.88 | 28.1 | 15.1 | 10.7 | [Model](https://huggingface.co/InternRobotics/VLN-PE) | 
+| `CMA` | Physical | 7.26 | 31.4 | 22.1 | 18.6 | [Model](https://huggingface.co/InternRobotics/VLN-PE) | 
+| `RDP` | Physical | 6.72 | 36.9 | 25.2 | 17.7 | [Model](https://huggingface.co/InternRobotics/VLN-PE) | 
+| `InternVLA-N1` | Physical | **5.31** | **49.0** | **42.6** | **35.8** | [Model](https://huggingface.co/InternRobotics/InternVLA-N1) | 
+
+#### Visual Navigation Task - PointGoal Navigation
+| Model  | Dataset/Benchmark | SR | SPL | Download |
+| ------ | ----------------- | -- | -- | --------- |
+| `iPlanner` | ClutteredEnv | 82.8 | 81.4 | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) | 
+| `ViPlanner` | ClutteredEnv | 16.7 | 14.1 | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) | 
+| `InternVLA-N1 (S1)` | ClutteredEnv | **88.4** | **85.0** | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) |
+| `iPlanner` | InternScenes | 45.6 | 43.9 | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) | 
+| `ViPlanner` | InternScenes | 37.8 | 33.9 | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) | 
+| `InternVLA-N1 (S1)` | InternScenes | **65.7** | **60.7** | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) | 
+
+
+
 **NOTE:**
-- The detailed benchmark results will be updated in the next few days.
+- The detailed benchmark results of other baselines will be updated in the next few days.
 - VLN-CE RxR benchmark and StreamVLN will be supported soon.
 
 ## 🔧 Customization
