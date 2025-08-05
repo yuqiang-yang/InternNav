@@ -1,6 +1,4 @@
 #!/bin/bash
-# source /root/miniconda3/etc/profile.d/conda.sh
-# conda activate internutopia
 
 source /root/miniconda3/etc/profile.d/conda.sh
 conda activate internutopia
@@ -14,11 +12,23 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         *)
-            echo "unknown parameter: $1"
+            echo "Unknown argument: $1"
             exit 1
             ;;
     esac
 done
+
+# Extract the prefix from the config filename
+CONFIG_BASENAME=$(basename "$CONFIG" .py)
+CONFIG_PREFIX=$(echo "$CONFIG_BASENAME" | sed 's/_cfg$//')
+
+# Create the logs directory if it doesn't exist
+mkdir -p logs
+
+# Set the log file paths
+SERVER_LOG="logs/${CONFIG_PREFIX}_server.log"
+EVAL_LOG="logs/${CONFIG_PREFIX}_eval.log"
+
 processes=$(ps -ef | grep 'internnav/agent/utils/server.py' | grep -v grep | awk '{print $2}')
 if [ -n "$processes" ]; then
     for pid in $processes; do
@@ -26,7 +36,7 @@ if [ -n "$processes" ]; then
         echo "kill: $pid"
     done
 fi
-python internnav/agent/utils/server.py --config $CONFIG > server.log 2>&1 &
+python internnav/agent/utils/server.py --config $CONFIG > "$SERVER_LOG" 2>&1 &
 
 
 RETRY_LIMIT=5
@@ -34,7 +44,7 @@ MONITOR_INTERVAL=60
 DEADLOCK_THRESHOLD=$((5 * 60))
 
 START_COMMAND="python -u scripts/eval/eval.py --config $CONFIG"
-LOG_FILE="eval.log"
+LOG_FILE="$EVAL_LOG"
 
 pid=0
 

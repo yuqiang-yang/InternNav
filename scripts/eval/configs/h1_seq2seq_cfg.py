@@ -30,7 +30,7 @@ eval_cfg = EvalCfg(
         },
         scene=SceneCfg(
             scene_type='mp3d',
-            mp3d_data_dir='data/scene_data/mp3d_pe',
+            scene_data_dir='data/scene_data/mp3d_pe',
         ),
         robot_name='h1',
         robot_usd_path='data/Embodiments/vln-pe/h1/h1_vln_pointcloud.usd',
@@ -38,6 +38,7 @@ eval_cfg = EvalCfg(
         camera_prim_path='torso_link/h1_pano_camera_0',
     ),
     dataset=EvalDatasetCfg(
+        dataset_type="mp3d",
         dataset_settings={
             'base_data_dir': 'data/vln_pe/raw_data',
             'split_data_types': ['val_unseen', 'val_seen'],

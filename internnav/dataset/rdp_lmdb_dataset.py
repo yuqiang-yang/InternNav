@@ -5,6 +5,7 @@ import lmdb
 import msgpack_numpy
 import numpy as np
 import torch
+import copy
 from PIL import Image
 from torchvision.transforms import (
     CenterCrop,
@@ -407,58 +408,70 @@ class RDP_LmdbDataset(BaseDataset):
         return self
 
 
-def rdp_collate_fn(batch):
-    def _pad_helper(t, max_len, fill_val=0, return_masks=False):
-        pad_amount = max_len - t.size(0)
-        if pad_amount == 0:
+def rdp_collate_fn(global_batch_size=None):
+    def _rdp_collate_fn(batch):
+        def _pad_helper(t, max_len, fill_val=0, return_masks=False):
+            pad_amount = max_len - t.size(0)
+            if pad_amount == 0:
+                if return_masks:
+                    mask = torch.ones(max_len, dtype=torch.int)
+                    return t, mask
+                return t
+
+            pad = torch.full_like(t[0:1], fill_val).expand(pad_amount, *t.size()[1:])
+
+            # Create the mask: 1 for original tokens, 0 for padding
             if return_masks:
-                mask = torch.ones(max_len, dtype=torch.int)
-                return t, mask
-            return t
+                mask = torch.zeros(max_len, dtype=torch.int)
+                mask[: t.size(0)] = 1  # Original tokens
+                mask[t.size(0) :] = 0  # Padded tokens
 
-        pad = torch.full_like(t[0:1], fill_val).expand(pad_amount, *t.size()[1:])
+                return torch.cat([t, pad], dim=0), mask
+            return torch.cat([t, pad], dim=0)
 
-        # Create the mask: 1 for original tokens, 0 for padding
-        if return_masks:
-            mask = torch.zeros(max_len, dtype=torch.int)
-            mask[: t.size(0)] = 1  # Original tokens
-            mask[t.size(0) :] = 0  # Padded tokens
+        observations_batch = batch
 
-            return torch.cat([t, pad], dim=0), mask
-        return torch.cat([t, pad], dim=0)
+        B = torch.tensor(len(observations_batch))
+        if B < global_batch_size:
+            while B < global_batch_size:
+                sample_to_copy = random.choice(batch)
+                observations_batch.append(copy.deepcopy(sample_to_copy))
+                B = torch.tensor(len(observations_batch))
+        B = torch.tensor(len(observations_batch))
 
-    observations_batch = batch
+        new_observations_batch = defaultdict(list)
+        for sensor in observations_batch[0].keys():
+            for bid in range(B):
+                new_observations_batch[sensor].append(observations_batch[bid][sensor])
 
-    B = len(observations_batch)
+        observations_batch = new_observations_batch
 
-    new_observations_batch = defaultdict(list)
-    for sensor in observations_batch[0].keys():
+        max_traj_len = max(ele.size(0) for ele in observations_batch['progress'])
+        not_done_masks_batch = torch.ones(B, max_traj_len, dtype=torch.uint8)
         for bid in range(B):
-            new_observations_batch[sensor].append(observations_batch[bid][sensor])
+            for sensor in observations_batch:
+                if sensor == 'progress':
+                    observations_batch[sensor][bid] = _pad_helper(
+                        observations_batch[sensor][bid], max_traj_len, fill_val=1.0
+                    )
+                else:
+                    observations_batch[sensor][bid] = _pad_helper(
+                        observations_batch[sensor][bid], max_traj_len, fill_val=0.0
+                    )
 
-    observations_batch = new_observations_batch
-
-    max_traj_len = max(ele.size(0) for ele in observations_batch['progress'])
-    not_done_masks_batch = torch.ones(B, max_traj_len, dtype=torch.uint8)
-    for bid in range(B):
         for sensor in observations_batch:
-            if sensor == 'progress':
-                observations_batch[sensor][bid] = _pad_helper(
-                    observations_batch[sensor][bid], max_traj_len, fill_val=1.0
-                )
-            else:
-                observations_batch[sensor][bid] = _pad_helper(
-                    observations_batch[sensor][bid], max_traj_len, fill_val=0.0
-                )
+            observations_batch[sensor] = torch.stack(observations_batch[sensor], dim=1)
+            observations_batch[sensor] = observations_batch[sensor].view(-1, *observations_batch[sensor].size()[2:])
 
-    for sensor in observations_batch:
-        observations_batch[sensor] = torch.stack(observations_batch[sensor], dim=1)
-        observations_batch[sensor] = observations_batch[sensor].view(-1, *observations_batch[sensor].size()[2:])
-
-    observations_batch = ObservationsDict(observations_batch)
-    return (
-        observations_batch,
-        observations_batch['prev_actions'],
-        not_done_masks_batch.view(-1, 1),
-        B
-    )
+        observations_batch = ObservationsDict(observations_batch)
+        # Expand B to match the flattened batch size
+        B_expanded = B.repeat(observations_batch['prev_actions'].shape[0]).view(-1, 1)
+            
+        return (
+            observations_batch,
+            observations_batch['prev_actions'],
+            not_done_masks_batch.view(-1, 1),
+            B_expanded
+        )
+    
+    return _rdp_collate_fn

@@ -29,7 +29,7 @@ class SceneCfg(BaseModel):
     scene_asset_path: str = None
     scene_scale: Optional[Any] = None
     scene_settings: Optional[Dict[str, Any]] = None
-    mp3d_data_dir: Optional[str] = None
+    scene_data_dir: Optional[str] = None
 
 
 class MetricCfg(BaseModel):

@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 
 import lmdb
 import msgpack_numpy
@@ -8,12 +9,13 @@ from internnav import PROJECT_ROOT_PATH
 from internnav.evaluator.utils.common import load_data
 from internnav.evaluator.utils.config import get_lmdb_path, get_lmdb_prefix
 
+from internnav.configs.evaluator import EvalDatasetCfg
 from .config import Config
 
 
-def split_data(config):
-    if isinstance(config, dict):
-        config = Config(**config)
+def split_data(dataset_cfg: EvalDatasetCfg):
+    if isinstance(dataset_cfg.dataset_settings, dict):
+        config = Config(**dataset_cfg.dataset_settings)
     run_type = config.run_type
     split_number = 1  # config.total_rank
     run_type = run_type
@@ -38,12 +40,15 @@ def split_data(config):
     # get all data
     path_key_map = {}
     count = 0
+
+    dataset_type = dataset_cfg.dataset_type
     for split_data_type in split_data_types:
         data_map = load_data(
             base_data_dir,
             split_data_type,
             filter_same_trajectory=filter_same_trajectory,
             filter_stairs=filter_stairs,
+            dataset_type=dataset_type,
         )
         for scan, path_list in data_map.items():
             path_key_list = []
@@ -105,15 +110,17 @@ def split_data(config):
 
 
 class ResultLogger:
-    def __init__(self, config):
-        if isinstance(config, dict):
-            config = Config(**config)
+    def __init__(self, dataset_cfg: EvalDatasetCfg):
+        if isinstance(dataset_cfg.dataset_settings, dict):
+            config = Config(**dataset_cfg.dataset_settings)
         self.name = config.task_name
         self.lmdb_path = get_lmdb_path(self.name)
+        self.dataset_type = dataset_cfg.dataset_type
         self.split_map = self.get_split_map(
             base_data_dir=config.base_data_dir,
             split_data_types=config.split_data_types,
-            filter_stairs=config.filter_stairs
+            filter_stairs=config.filter_stairs,
+            dataset_type=self.dataset_type,
         )
 
     def get_split_map(
@@ -121,6 +128,7 @@ class ResultLogger:
         base_data_dir,
         split_data_types,
         filter_stairs,
+        dataset_type='mp3d',
     ):
         split_map = {}
         for split_data_type in split_data_types:
@@ -129,6 +137,7 @@ class ResultLogger:
                 split_data_type,
                 filter_same_trajectory=False,
                 filter_stairs=filter_stairs,
+                dataset_type=dataset_type,
             )
             path_key_list = []
             for scan, path_list in load_data_map.items():
@@ -139,6 +148,89 @@ class ResultLogger:
                     path_key_list.append(path_key)
             split_map[split_data_type] = path_key_list
         return split_map
+
+    def write_now_result_json(self):
+        # create log file
+        log_content = []
+        self.database_read = lmdb.open(
+            f'{self.lmdb_path}/sample_data.lmdb',
+            map_size=1 * 1024 * 1024 * 1024 * 1024,
+            readonly=True,
+            lock=False,
+        )
+        json_data = {}
+        for split, path_key_list in self.split_map.items():
+            data_list = []
+            for path_key in path_key_list:
+                data_key = path_key
+                with self.database_read.begin() as txn:
+                    value = txn.get(data_key.encode())
+                    if value is None:
+                        continue
+                    value = msgpack_numpy.unpackb(value)
+                value['path_key'] = path_key
+                data_list.append(value)
+            count = len(data_list)
+            total_TL = 0
+            total_NE = 0
+            total_osr = 0
+            total_success = 0
+            total_spl = 0
+            reason_map = {'reach_goal': 0}
+
+            for data in data_list:
+                # TL Trajectory Length (TL) - trajectory total length (0)
+                TL = data['info']['TL']
+                # NE Navigation Error (NE) - Euclidean distance from current position to goal (-1)
+                NE = data['info']['NE']
+                if NE < 0:
+                    NE = 0
+                # OS Oracle Success Rate (OSR) - whether there is a point in the trajectory reaching the goal (-1)
+                osr = data['info']['osr']
+                if osr < 0:
+                    osr = 0
+                # SR Success Rate (SR) - whether the goal is reached (0)
+                success = data['info']['success']
+                # SPL (Success weighted by Path Length)(0)
+                spl = data['info']['spl']
+
+                total_TL += TL
+                total_NE += NE
+                total_osr += osr
+                total_success += success
+                total_spl += spl
+
+                ret_type = data['fail_reason']
+                if ret_type == '':
+                    ret_type = 'success'
+                if ret_type not in reason_map:
+                    reason_map[ret_type] = 1
+                else:
+                    reason_map[ret_type] = reason_map[ret_type] + 1
+                if success > 0:
+                    reason_map['reach_goal'] = reason_map['reach_goal'] + 1
+            
+            if count == 0:
+                continue
+            json_data[split]={}
+            json_data[split]['TL']=round((total_TL / count),4)
+            json_data[split]['NE']=round((total_NE / count),4)
+            if 'fall' not in reason_map:
+                reason_map['fall'] = 0
+            json_data[split]['FR']=round((reason_map['fall'] / count),4)
+            if 'stuck' in reason_map:
+                json_data[split]['StR']=round((reason_map['stuck'] / count),4)
+            else:
+                json_data[split]['StR']=0
+            json_data[split]['OS']=round((total_osr / count),4)
+            json_data[split]['SR']=round((total_success / count),4)
+            json_data[split]['SPL']=round((total_spl / count),4)
+            json_data[split]['Count']=count
+
+        # write log content to file
+        with open(f'{self.dataset_type}_result.json', 'w') as f:
+            json.dump(json_data, f)
+        self.database_read.close()
 
     def write_now_result(self):
 
