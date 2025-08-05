@@ -172,28 +172,39 @@ def load_data(
     dataset_root_dir,
     split,
     filter_same_trajectory=True,
-    filter_stairs=True
+    filter_stairs=True,
+    dataset_type='mp3d'
 ):
     with gzip.open(os.path.join(dataset_root_dir, split, f"{split}.json.gz"), 'rt', encoding='utf-8') as f:
         data = json.load(f)['episodes']
-        
-    scenes = list(set([x['scene_id'] for x in data]))  # e.g. 'mp3d/zsNo4HB9uLZ/zsNo4HB9uLZ.glb'
+
+    if dataset_type == 'mp3d':
+        scenes = list(set([x['scene_id'] for x in data]))  # e.g. 'mp3d/zsNo4HB9uLZ/zsNo4HB9uLZ.glb'
+    elif dataset_type == 'kujiale':
+        scenes = list(set([x['scan'] for x in data]))
+    else:
+        raise Exception(f"Unsupported dataset type {dataset_type}, please update cfg to contain valid dataset_type")
     scenes.sort()
     new_data = {}
     for scene in scenes:
-        scene_data = [x for x in data if x['scene_id'] == scene]
-        scan = scene.split('/')[1]  # e.g. 'zsNo4HB9uLZ'
+        if dataset_type == 'mp3d':
+            scene_data = [x for x in data if x['scene_id'] == scene]
+            scan = scene.split('/')[1]  # e.g. 'zsNo4HB9uLZ'
+        else:
+            scene_data = [x for x in data if x['scan'] == scene]
+            scan = scene
         new_scene_data = []
         for item in scene_data:
             new_item = copy.deepcopy(item)
             new_item['scan'] = scan
             new_item['original_start_position'] = item['start_position']
             new_item['original_start_rotation'] = item['start_rotation']
-            x, z, y = item['start_position']
-            new_item['start_position'] = [x, -y, z]
-            r1, r2, r3, r4 = item['start_rotation']
-            new_item['start_rotation'] = transform_rotation_z_90degrees([-r4, r1, r3, -r2])
-            new_item['reference_path'] = [[x, -y, z] for x, z, y in item['reference_path']]
+            if dataset_type == 'mp3d':
+                x, z, y = item['start_position']
+                new_item['start_position'] = [x, -y, z]
+                r1, r2, r3, r4 = item['start_rotation']
+                new_item['start_rotation'] = transform_rotation_z_90degrees([-r4, r1, r3, -r2])
+                new_item['reference_path'] = [[x, -y, z] for x, z, y in item['reference_path']]
             new_scene_data.append(new_item)
 
         new_data[scan] = new_scene_data
@@ -247,6 +258,14 @@ def load_scene_usd(mp3d_data_dir, scan):
         if find_flag:
             break
     if not find_flag:
+        log.error('Scene USD not found for scan %s', scan)
+        return None
+    return scene_usd_path
+
+def load_kujiale_scene_usd(kujiale_iros_data_dir, scan):
+    """Load scene USD based on the scan"""
+    scene_usd_path = os.path.join(kujiale_iros_data_dir, scan, f'{scan}.usda')
+    if not os.path.exists(scene_usd_path):
         log.error('Scene USD not found for scan %s', scan)
         return None
     return scene_usd_path

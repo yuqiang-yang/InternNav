@@ -51,7 +51,7 @@ eval_cfg = EvalCfg(
         },
         scene=SceneCfg(
             scene_type='mp3d',
-            mp3d_data_dir='data/scene_data/mp3d_pe',
+            scene_data_dir='data/scene_data/mp3d_pe',
         ),
         robot_name='h1',
         robot_flash=True, # If robot_flash is True, the mode is flash (set world_pose directly); else you choose physical mode.
@@ -61,6 +61,7 @@ eval_cfg = EvalCfg(
         one_step_stand_still = True, #For dual-system, please keep this param True.
     ),
     dataset=EvalDatasetCfg(
+        dataset_type="mp3d",
         dataset_settings={
             'base_data_dir': 'data/vln_pe/raw_data',
             'split_data_types': ['val_unseen'],  # 'val_seen'

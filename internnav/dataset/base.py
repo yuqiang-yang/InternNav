@@ -32,6 +32,7 @@ class BaseDataset(IterableDataset):
         self.camera_name = self.config.il.camera_name
         self.need_extract_instr_features = True
         self.extract_img_features = True
+        self.global_batch_size = self.batch_size * len(self.config.torch_gpu_ids)
 
     def _create_new_data(self, data, yaws, instruction):
         """Helper function to create new data entry"""
@@ -51,7 +52,10 @@ class BaseDataset(IterableDataset):
 
         # Handle RGB and depth features/data
         new_data['rgb'] = data['camera_info'][self.camera_name]['rgb']
-        new_data['depth'] = np.expand_dims(data['camera_info'][self.camera_name]['depth'], axis=-1)
+        if len(data['camera_info'][self.camera_name]['depth']) == 2:
+            new_data['depth'] = np.expand_dims(data['camera_info'][self.camera_name]['depth'], axis=-1)
+        else:
+            new_data['depth'] = data['camera_info'][self.camera_name]['depth']
 
         return new_data
 

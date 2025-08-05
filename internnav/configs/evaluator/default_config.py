@@ -162,7 +162,7 @@ def get_config(evaluator_cfg: EvalCfg):
         move_by_speed_cfg = h1_vln_move_by_speed_cfg.model_dump()
         robot_type = 'VLNH1Robot'
         robot_usd_path = evaluator_cfg.task.robot_usd_path
-        h1_vln_move_by_speed_cfg.policy_weights_path = os.path.dirname(robot_usd_path) + '/policy/move_by_speed/h1_loco_jit_policy.pt'
+        move_by_speed_cfg["policy_weights_path"] = os.path.dirname(robot_usd_path) + '/policy/move_by_speed/h1_loco_jit_policy.pt'
         camera_resolution = evaluator_cfg.task.camera_resolution
         robot_offset = np.array([0.0, 0.0, 1.05])
         camera_prim_path = evaluator_cfg.task.camera_prim_path
@@ -259,7 +259,7 @@ def get_config(evaluator_cfg: EvalCfg):
             scene_asset_path='',
             scene_scale=(1, 1, 1),
             scene_settings={},
-            mp3d_data_dir=evaluator_cfg.task.scene.mp3d_data_dir,
+            scene_data_dir=evaluator_cfg.task.scene.scene_data_dir,
         )
     elif evaluator_cfg.task.scene.scene_type == 'grscene':
         evaluator_cfg.task.scene = SceneCfg(
@@ -267,7 +267,15 @@ def get_config(evaluator_cfg: EvalCfg):
             scene_asset_path='',
             scene_scale=(0.01, 0.01, 0.01),
             scene_settings={},
-            mp3d_data_dir=evaluator_cfg.task.scene.mp3d_data_dir,
+            scene_data_dir=evaluator_cfg.task.scene.scene_data_dir,
+        )
+    elif evaluator_cfg.task.scene.scene_type == 'kujiale':
+        evaluator_cfg.task.scene = SceneCfg(
+            scene_type='kujiale',
+            scene_asset_path='',
+            scene_scale=(0.01, 0.01, 0.01),
+            scene_settings={},
+            scene_data_dir=evaluator_cfg.task.scene.scene_data_dir,
         )
 
     model_settings.update(evaluator_cfg.agent.model_settings)

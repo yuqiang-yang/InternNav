@@ -10,6 +10,7 @@ from .data_reviser import skip_list
 class ResumablePathKeyDataloader(BasePathKeyDataloader):
     def __init__(
         self,
+        dataset_type,
         base_data_dir,
         split_data_types,
         robot_offset,
@@ -21,6 +22,7 @@ class ResumablePathKeyDataloader(BasePathKeyDataloader):
     ):
         # 加载所有数据
         super().__init__(
+            dataset_type=dataset_type,
             base_data_dir=base_data_dir,
             split_data_types=split_data_types,
             robot_offset=robot_offset,

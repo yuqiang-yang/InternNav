@@ -6,6 +6,7 @@ from .data_reviser import revise_one_data, skip_list
 class BasePathKeyDataloader:
     def __init__(
         self,
+        dataset_type,
         base_data_dir,
         split_data_types,
         robot_offset,
@@ -23,6 +24,7 @@ class BasePathKeyDataloader:
                 split_data_type,
                 filter_same_trajectory=filter_same_trajectory,
                 filter_stairs=filter_stairs,
+                dataset_type=dataset_type,
             )
             for scan, path_list in load_data_map.items():
                 for path in path_list:

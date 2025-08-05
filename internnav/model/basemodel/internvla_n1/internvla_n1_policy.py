@@ -24,7 +24,9 @@ class InternVLAN1Net(PreTrainedModel):
             attn_implementation="flash_attention_2", device_map={"": self.model_config.device}
         )
         
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_config.model_path, use_fast=True)
         self.processor = AutoProcessor.from_pretrained(self.model_config.model_path)
+        self.processor.tokenizer = self.tokenizer
         self.processor.tokenizer.padding_side = 'left'
         
         self.init_prompts()

@@ -40,10 +40,10 @@ class VlnPeEvaluator(Evaluator):
     def __init__(self, config: EvalCfg):
         self.task_name = config.task.task_name
         if not Path(get_lmdb_path(self.task_name)).exists():
-            split_data(config.dataset.dataset_settings)
-        self.result_logger = ResultLogger(config.dataset.dataset_settings)
+            split_data(config.dataset)
+        self.result_logger = ResultLogger(config.dataset)
         common_log_util.init(self.task_name)
-        self.dataloader = ResumablePathKeyDataloader(**config.dataset.dataset_settings)
+        self.dataloader = ResumablePathKeyDataloader(config.dataset.dataset_type, **config.dataset.dataset_settings)
         self.dataset_name = Path(config.dataset.dataset_settings['base_data_dir']).name
         progress_log_multi_util.init(self.task_name, self.dataloader.size)
         self.total_path_num = self.dataloader.size
@@ -78,6 +78,7 @@ class VlnPeEvaluator(Evaluator):
         set_seed_model(0)
         self.data_collector = DataCollector(self.dataloader.lmdb_path)
         self.robot_flash = config.task.robot_flash
+        self.save_to_json = False
 
     @property
     def ignore_obs_attr(self):
@@ -194,6 +195,8 @@ class VlnPeEvaluator(Evaluator):
                     step_count=obs['metrics'][list(obs['metrics'].keys())[0]][0]['steps'],
                     result=obs['metrics'][list(obs['metrics'].keys())[0]][0]['fail_reason'],
                 )
+                if self.save_to_json:
+                    self.result_logger.write_now_result_json()
                 self.result_logger.write_now_result()
                 self.runner_status[env_id] = runner_status_code.NOT_RESET
                 log.debug(f'env{env_id}: states switch to NOT_RESET.')

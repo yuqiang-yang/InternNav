@@ -440,7 +440,12 @@ def load_dataset(dataset_root_dir, split, logger=None, dataset_type='r2r'):
                         item['c_reference_path'].append([path[0], -path[2], path[1]])
                     item['reference_path'] = item['c_reference_path']
                     del item['c_reference_path']
-            load_data[str(item['trajectory_id'])].append(item)
+            
+            if dataset_type == 'kujiale':
+                load_data[f'{str(item["trajectory_id"])}_{str(item["episode_id"])}'].append(item)
+            else:
+                load_data[str(item['trajectory_id'])].append(item)
     if logger is not None:
         logger.info(f'Loaded data with a total of {len(load_data)} items from {split}')
     return load_data
+    

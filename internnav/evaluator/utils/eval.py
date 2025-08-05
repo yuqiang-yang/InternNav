@@ -1,7 +1,7 @@
 import base64
 import pickle
 
-from internnav.evaluator.utils.common import load_scene_usd
+from internnav.evaluator.utils.common import load_scene_usd, load_kujiale_scene_usd
 from internnav.projects.dataloader.resumable import ResumablePathKeyDataloader
 from internnav.projects.internutopia_vln_extension.configs.tasks.vln_eval_task import (
     VLNEvalTaskCfg,
@@ -16,7 +16,7 @@ from internutopia_extension.configs.sensors import RepCameraCfg
 
 
 def generate_episode(dataloader: ResumablePathKeyDataloader, config: EvalCfg):
-    mp3d_data_dir = config.task.scene.mp3d_data_dir
+    scene_data_dir = config.task.scene.scene_data_dir
     scene_asset_path = config.task.scene.scene_asset_path
     eval_path_key_list = dataloader.resumed_path_key_list
     path_key_data = dataloader.path_key_data
@@ -34,6 +34,14 @@ def generate_episode(dataloader: ResumablePathKeyDataloader, config: EvalCfg):
         start_rotation = data['start_rotation']
         data['path_key'] = path_key
         data['name'] = dataloader.task_name
+
+        if config.task.scene.scene_type == 'kujiale':
+            load_scene_func = load_kujiale_scene_usd
+            scene_scale = (1, 1, 1)
+        else:
+            load_scene_func = load_scene_usd
+            scene_scale = (1, 1, 1)
+
         robot_flash = getattr(config.task, "robot_flash", False)
         one_step_stand_still = getattr(config.task, "one_step_stand_still", False)
         if config.task.metric.metric_setting['metric_config'].get('name', None) is None:
@@ -44,10 +52,10 @@ def generate_episode(dataloader: ResumablePathKeyDataloader, config: EvalCfg):
                 robot_flash=robot_flash,
                 one_step_stand_still=one_step_stand_still,
                 metrics=[VLNPEMetricCfg(**config.task.metric.metric_setting['metric_config'])],
-                scene_asset_path=load_scene_usd(mp3d_data_dir, dataloader.path_key_scan[path_key])
+                scene_asset_path=load_scene_func(scene_data_dir, dataloader.path_key_scan[path_key])
                 if scene_asset_path == ''
                 else scene_asset_path,
-                scene_scale=(1, 1, 1),
+                scene_scale=scene_scale,
                 robots=[
                     robot.update(
                         position=(
