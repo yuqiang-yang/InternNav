@@ -10,53 +10,11 @@ The system should be capable of handling challenges such as camera shake, height
 
 ---
 
-### 🧠 Key Objectives
-
-- **Multimodal Perception & Understanding**: Combine egocentric RGB/depth vision with natural language instructions into a unified understanding framework.
-- **Physics-based Robustness**: Ensure stable and safe control on a humanoid robot within a physics simulator, handling:
-  - Camera shake and motion blur
-  - Dynamic height shifts during walking
-  - Close-range obstacle avoidance
-- **Human-like Navigation**: Demonstrate smooth and interpretable navigation behavior similar to how a human would follow instructions.
-
----
-
-### 🧪 Simulation Environment
-
-- **Platform**: Physics-driven simulation using [InternUtopia](https://github.com/InternRobotics/InternUtopia)
-- **Robot**: Unitree H1 humanoid robot model  
-- **Tasks**: Instruction-based navigation in richly furnished indoor scenes  
-- **Evaluation**: Based on success rate, path efficiency, and instruction compliance
-
----
-
-### 🔍 Evaluation Metrics
-
-- **Success Rate (SR)**: Proportion of episodes where the agent reaches the goal location within 3m  
-- **SPL**: Success weighted by Path Length
-- **Trajectory Length (TL)**: Total length of the trajectory (m)
-- **Navigation Error (NE)**: Euclidean distance between the agent's final position and the goal (m)
-- **OS Oracle Success Rate (OSR)**: Whether any point along the predicted trajectory reaches the goal within 3m
-- **Fall Rate (FR)**: Frequency of the agent falling during navigation
-- **Stuck Rate (StR)**: Frequency of the agent becoming stuck during navigation
-
----
-
-### 🚨 Challenges to Solve
-
-- ✅ Integrating vision, language, and control into a single inference pipeline  
-- ✅ Overcoming sensor instability and actuation delay from simulated humanoid locomotion  
-- ✅ Ensuring real-time, smooth, and goal-directed behavior under physics constraints
-
-This track pushes the boundary of embodied AI by combining **natural language understanding**, **3D vision**, and **realistic robot control**, fostering solutions ready for future real-world deployments.
-
----
-
 # 🚀 Get Started
 
 This guide provides a step-by-step walkthrough for participating in the **IROS 2025 Challenge on Multimodal Robot Learning**—from setting up your environment and developing your model, to evaluating and submitting your results.
 
----
+
 
 ## 🔗 Useful Links
 - 🔍 **Challenge Overview:**  
@@ -68,7 +26,7 @@ This guide provides a step-by-step walkthrough for participating in the **IROS 2
 - 🚀 **Interactive Demo:**  
  [InternNav Model Inference Demo](https://huggingface.co/spaces/InternRobotics/InternNav-Eval-Demo)
 
----
+
 
 ## 🧩 Environment Setup
 
@@ -108,37 +66,55 @@ $ docker run --name internnav -it --rm --gpus all --network host \
 ```
 
 ### Download the starter dataset (val_seen + val_unseen splits)
+
+Download **InteriorAgent Dataset**
 ```bash
 $ git lfs install
 # At /root/InternNav/
 $ mkdir kujiale_data
+
 # InteriorAgent scene usd
 $ git clone https://huggingface.co/datasets/spatialverse/InteriorAgent kujiale_data/scene_data
+
 # InteriorAgent train and val dataset
 $ git clone https://huggingface.co/datasets/spatialverse/InteriorAgent_Nav kujiale_data/raw_data
+```
+Please refer to [document](https://internrobotics.github.io/user_guide/internnav/quick_start/installation.html#interndata-n1-dataset-preparation) for a full guide on InternData-N1 Dataset Preparation.
 
-# Latest InternData (required huggingface token to download, generate one from here https://huggingface.co/settings/tokens)
-$ git clone -b v0.1-full https://huggingface.co/datasets/InternRobotics/InternData-N1 data
+- Download the [InternData-N1](https://huggingface.co/datasets/InternRobotics/InternData-N1) for the `vln_pe/`, 
+- Download the [SceneData-N1](https://huggingface.co/datasets/InternRobotics/Scene-N1/tree/main) for the `scene_data/`, 
+- Download the [Embodiments](https://huggingface.co/datasets/InternRobotics/Embodiments) for the `Embodiments/`
+```bash
+# InternData-N1 with vln-pe data only
+GIT_LFS_SKIP_SMUDGE=1 git clone -b v0.1-full https://huggingface.co/datasets/InternRobotics/InternData-N1 data
+cd data
+git lfs pull --include="vln_pe/**"
+
+# Scene
+wget https://huggingface.co/datasets/InternRobotics/Scene-N1/resolve/main/mp3d_pe.tar.gz
+
+# Embodiments
+git clone https://huggingface.co/datasets/InternRobotics/Embodiments data/Embodiments
 ```
 
-### Suggested Dataset Path
+### Suggested Dataset Directory Structure
 #### InternData-N1
 ```
 data/ 
 ├── Embodiments/
 ├── scene_data/
-│   ├── mp3d/
-│   │   ├──17DRP5sb8fy/
-│   │   ├── 1LXtFkjw3qL/
-│   │   └── ...
-├── vln_pe/
-│   ├── raw_data/
-│   │   ├── train/
-│   │   ├── val_seen/
-│   │   │   └── val_seen.json.gz
-│   │   └── val_unseen/
-│   │       └── val_unseen.json.gz
-└── └── traj_data/
+│   └── mp3d_pe/
+│       ├──17DRP5sb8fy/
+│       ├── 1LXtFkjw3qL/
+│       └── ...
+└── vln_pe/
+    ├── raw_data/
+    │   ├── train/
+    │   ├── val_seen/
+    │   │   └── val_seen.json.gz
+    │   └── val_unseen/
+    │       └── val_unseen.json.gz
+    └── traj_data/
         ├── interior_agent/
         │   └── kujiale
         └── mp3d/
@@ -171,9 +147,13 @@ $ huggingface-cli download --include 'longclip-B.pt' --local-dir-use-symlinks Fa
 $ git clone https://huggingface.co/InternRobotics/VLN-PE && mv VLN-PE/r2r checkpoints/
 ```
 
-## 🛠️ Local Development & Testing
+## 🛠️ Model Training & Testing
 
-### Develop & test
+Please refer to the [documentation](https://internrobotics.github.io/user_guide/internnav/quick_start/train_eval.html) for a quick-start guide to training or evaluating supported models in InternNav. 
+
+For advanced usage, including customizing datasets, models, and experimental settings, see the [tutorial](https://internrobotics.github.io/user_guide/internnav/tutorials/index.html).
+
+### Train and Evaluate the Baseline Model
 - Implement your policy under `internnav/model` and add to `internav/agent`.
 - We provide train and eval scripts to quick start.
 - Use our train script to train your model:
@@ -264,6 +244,7 @@ Create a JSON file with your Docker image URL and team information. The submissi
 
 For detailed submission guidelines and troubleshooting, refer to the official Eval.AI platform documentation.
 
+
 ## 📝 Official Evaluation Flow
 ### DSW Creation
 - We use the AliCloud API to instantiate an instance from your image link.
@@ -277,7 +258,49 @@ For detailed submission guidelines and troubleshooting, refer to the official Ev
 - Upon completion, metrics for each split are parsed and pushed to the [EvalAI](https://eval.ai/web/challenges/challenge-page/2627/overview) leaderboard.
 - The released results are computed as a weighted sum of the test subsets from VLNPE-R2R (MP3D scenes) and Interior-Agent (Kujiale scenes), with a weighting ratio of 2:1.
 
----
+## 📖 About the Challenge
+
+### 🧠 Key Objectives
+
+- **Multimodal Perception & Understanding**: Combine egocentric RGB/depth vision with natural language instructions into a unified understanding framework.
+- **Physics-based Robustness**: Ensure stable and safe control on a humanoid robot within a physics simulator, handling:
+  - Camera shake and motion blur
+  - Dynamic height shifts during walking
+  - Close-range obstacle avoidance
+- **Human-like Navigation**: Demonstrate smooth and interpretable navigation behavior similar to how a human would follow instructions.
+
+
+### 🧪 Simulation Environment
+
+- **Platform**: Physics-driven simulation using [InternUtopia](https://github.com/InternRobotics/InternUtopia)
+- **Robot**: Unitree H1 humanoid robot model  
+- **Tasks**: Instruction-based navigation in richly furnished indoor scenes  
+- **Evaluation**: Based on success rate, path efficiency, and instruction compliance
+
+
+
+### 🔍 Evaluation Metrics
+
+- **Success Rate (SR)**: Proportion of episodes where the agent reaches the goal location within 3m  
+- **SPL**: Success weighted by Path Length
+- **Trajectory Length (TL)**: Total length of the trajectory (m)
+- **Navigation Error (NE)**: Euclidean distance between the agent's final position and the goal (m)
+- **OS Oracle Success Rate (OSR)**: Whether any point along the predicted trajectory reaches the goal within 3m
+- **Fall Rate (FR)**: Frequency of the agent falling during navigation
+- **Stuck Rate (StR)**: Frequency of the agent becoming stuck during navigation
+
+
+
+### 🚨 Challenges to Solve
+
+- ✅ Integrating vision, language, and control into a single inference pipeline  
+- ✅ Overcoming sensor instability and actuation delay from simulated humanoid locomotion  
+- ✅ Ensuring real-time, smooth, and goal-directed behavior under physics constraints
+
+This track pushes the boundary of embodied AI by combining **natural language understanding**, **3D vision**, and **realistic robot control**, fostering solutions ready for future real-world deployments.
+
+
+
 ## 📖 Citation
 For more details with in-depth physical analysis results on the VLN task, please refer to our **VLN-PE**:
 [Rethinking the Embodied Gap in Vision-and-Language Navigation: A Holistic Study of Physical and Visual Disparities](https://arxiv.org/pdf/2507.13019).
