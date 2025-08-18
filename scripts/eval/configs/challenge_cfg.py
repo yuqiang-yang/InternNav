@@ -18,14 +18,14 @@ eval_cfg = EvalCfg(
         env_type='vln_pe',
         env_settings={
             'use_fabric': False,
-            'headless': True,
+            'headless': True,   # display option: set to False will open isaac-sim interactive window
         },
     ),
     task=TaskCfg(
         task_name='rdp_iros_test',
         task_settings={
             'env_num': 2,
-            'use_distributed': True,
+            'use_distributed': False,   # Ray distributed framework
             'proc_num': 8,
         },
         scene=SceneCfg(
@@ -40,9 +40,13 @@ eval_cfg = EvalCfg(
     dataset=EvalDatasetCfg(
         dataset_type="mp3d",
         dataset_settings={
-            'base_data_dir': 'data/vln_pe/raw_data',
+            'base_data_dir': 'data/vln_pe/raw_data/r2r',
             'split_data_types': ['val_unseen', 'val_seen'],
-            'filter_stairs': True,
+            'filter_stairs': False,
         },
     ),
+    eval_settings={
+        'save_to_json': True,
+        'vis_output': True      # save result to video under logs/
+    }
 )
