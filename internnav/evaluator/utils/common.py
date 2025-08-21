@@ -508,7 +508,7 @@ def obs_to_image(obs_lst, action, output_path: str, reference_path, normalize: b
     depth = first_obs['topdown_depth']
 
     # draw array on rgb array
-    rgb_array = draw_action(rgb_array, action)
+    # rgb_array = draw_action(rgb_array, action)
 
     # draw trajectory on depth
     topdown_array = crop(draw_trajectory(topdown_array, obs_lst, reference_path))
@@ -561,7 +561,8 @@ def images_to_video(image_folder, output_path, fps=10):
     image_files.sort(key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
 
     if not image_files:
-        raise ValueError("No images found in the folder.")
+        print("No images found in the folder.")
+        return
 
     # Read the first image to get frame size
     frame = cv2.imread(image_files[0])
