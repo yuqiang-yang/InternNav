@@ -23,6 +23,7 @@ class NavDP_Policy_DPT_CriticSum_DAT(nn.Module):
                  use_critic=False,
                  input_dtype="bf16",
                  navdp_pretrained=None,
+                 navdp_version=0.0,
                  device='cuda:0'):
         super().__init__()
         self.image_size = image_size
@@ -41,7 +42,7 @@ class NavDP_Policy_DPT_CriticSum_DAT(nn.Module):
         else:
             self.input_dtype = torch.float32
         
-        self.rgbd_encoder = DAT_RGBD_Patch_Backbone(image_size, token_dim, memory_size=memory_size, finetune=finetune)
+        self.rgbd_encoder = DAT_RGBD_Patch_Backbone(image_size, token_dim, memory_size=memory_size, finetune=finetune, version=navdp_version)
         self.point_encoder = nn.Linear(3, self.token_dim)
         self.decoder_layer = nn.TransformerDecoderLayer(d_model=token_dim,
                                                         nhead=heads,
@@ -170,12 +171,12 @@ class NavDP_Policy_DPT_CriticSum_DAT(nn.Module):
         cond_embedding = cond_embedding.repeat(action_embeds.shape[0], 1, 1)
         input_embedding = action_embeds + self.out_pos_embed[:, :self.predict_size, :]
         
-        output = self.decoder(tgt = input_embedding, memory = cond_embedding, tgt_mask = self.tgt_mask)
+        output = self.decoder(tgt=input_embedding, memory=cond_embedding, tgt_mask=self.tgt_mask)
         output = self.layernorm(output)
         output = self.action_head(output)
         return output
     
-    def predict_pointgoal_action(self, vlm_tokens, input_images=None, input_depths=None, vlm_mask=None, sample_num=32):
+    def predict_pointgoal_action_async(self, vlm_tokens, input_images=None, input_depths=None, vlm_mask=None, sample_num=32):
         """
         Predict action sequence for point goal navigation using diffusion-based approach.
 
@@ -229,4 +230,41 @@ class NavDP_Policy_DPT_CriticSum_DAT(nn.Module):
             
             current_trajectory = naction
             return current_trajectory
+        
+    def predict_pointgoal_action(self, vlm_tokens, input_images=None, input_depths=None, vlm_mask=None, sample_num=32):
+        """
+        Args:
+            vlm_tokens: bs*sel_num, token_nums, 3584
+            input_images: bs*sel_num, memory+1, 224, 224, 3
+            input_depths: bs*sel_num, 1, 224, 224, 3
+            vlm_mask: bs*sel_num, token_nums
+        """
+        with torch.no_grad():
+            bs = vlm_tokens.shape[0]
+            if bs != 1:
+                vlm_tokens = vlm_tokens[0:1]
+                vlm_mask = vlm_mask[0:1]
+                bs = 1
+            
+            if vlm_mask is not None:
+                vlm_mask_ = vlm_mask.bool()
+                # mask==True parts will be ignored by transformer, but now vlm valid parts have mask==True!
+                vlm_mask = ~vlm_mask_
+            
+            vlm_tokens = self.vlm_embed_mlp(vlm_tokens)
+            vlm_embed = torch.mean(vlm_tokens, dim=1).unsqueeze(1)
+            
+            noisy_action = torch.randn((sample_num * bs, self.predict_size, 3), dtype=vlm_embed.dtype).to(vlm_embed.device)
+            naction = noisy_action
+            
+            self.noise_scheduler.set_timesteps(self.noise_scheduler.config.num_train_timesteps)
+            for k in self.noise_scheduler.timesteps[:]:
+                noise_pred = self.predict_noise(naction, k.unsqueeze(0), vlm_embed)
+                naction = self.noise_scheduler.step(model_output=noise_pred, timestep=k, sample=naction).prev_sample
+                
+
+            current_trajectory = naction
+            return current_trajectory
+        
+            
             

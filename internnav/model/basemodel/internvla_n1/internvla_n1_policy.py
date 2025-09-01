@@ -180,9 +180,12 @@ class InternVLAN1Net(PreTrainedModel):
         return output
     
             
-    def s1_step_latent(self, rgb, depth, latent):
+    def s1_step_latent(self, rgb, depth, latent, use_async=False):
         with torch.no_grad():
-            dp_actions = self.model.generate_traj(latent)
+            if use_async:
+                dp_actions = self.model.generate_traj(latent, rgb, depth, use_async)
+            else:
+                dp_actions = self.model.generate_traj(latent)
 
         if self.continuous_traj:
             action_list = traj_to_actions(dp_actions)
@@ -191,5 +194,11 @@ class InternVLAN1Net(PreTrainedModel):
             action_list = chunk_token(dp_actions[random_choice])
             
         action_list = [x for x in action_list if x != 0]
-        output = S1Output(idx=action_list[:8])
+        
+        
+        ##If the mode is async, S1 just use the part of actions
+        if use_async:
+            output = S1Output(idx=action_list[:4])
+        else:
+            output = S1Output(idx=action_list[:8])
         return output

@@ -104,6 +104,7 @@ class DAT_RGBD_Patch_Backbone(nn.Module):
                  memory_size=8,
                  checkpoint="checkpoints/depth_anything_v2_vits.pth",
                  input_dtype="bf16",
+                 version=0.0,
                  device = 'cuda:0'):
         super().__init__()
         self.finetune = finetune
@@ -111,6 +112,7 @@ class DAT_RGBD_Patch_Backbone(nn.Module):
         self.image_size = image_size
         self.embed_size = embed_size
         self.input_dtype = torch.bfloat16 if input_dtype == "bf16" else torch.float32
+        self.version = version
 
         model_configs = {'vits': {'encoder': 'vits', 'features': 64, 'out_channels': [48, 96, 192, 384]}}
         self.rgb_model = DepthAnythingV2(**model_configs['vits'])
@@ -131,7 +133,12 @@ class DAT_RGBD_Patch_Backbone(nn.Module):
 
         self.former_query = nn.Embedding(self.memory_size * 16, 384)
         nn.init.constant_(self.former_query.weight, val=0)
-        self.former_pe = nn.Embedding((self.memory_size * 2) * 256, 384)
+        
+        if self.version > 0.0:
+            self.former_pe = nn.Embedding((self.memory_size * 2) * 256, 384)
+        else:
+            self.former_pe = nn.Embedding((self.memory_size + 1) * 256, 384)
+            
         nn.init.constant_(self.former_pe.weight, val=0)
         self.former_net = nn.TransformerDecoder(nn.TransformerDecoderLayer(384, 8, batch_first=True), 2)
         self.project_layer = nn.Linear(384, embed_size)
@@ -163,8 +170,12 @@ class DAT_RGBD_Patch_Backbone(nn.Module):
             tensor_depths = tensor_depths.reshape(-1, 1, self.image_size, self.image_size)
             tensor_depths = torch.cat([tensor_depths, tensor_depths, tensor_depths], dim=1)
             depth_token = self.depth_model.get_intermediate_layers(tensor_depths)[0].reshape(B, T * 256, -1)
+            
+        if self.version > 0.0:
+            former_pe_indice = torch.arange((self.memory_size * 2) * 256, device=images.device).expand(image_token.shape[0], (self.memory_size * 2) * 256)
+        else:
+            former_pe_indice = torch.arange((self.memory_size + 1) * 256, device=images.device).expand(image_token.shape[0], (self.memory_size + 1) * 256)
 
-        former_pe_indice = torch.arange((self.memory_size * 2) * 256, device=images.device).expand(image_token.shape[0], (self.memory_size * 2) * 256)
         former_pe = self.former_pe(former_pe_indice)
         former_token = torch.cat((image_token, depth_token), dim=1) + former_pe
 

@@ -17,7 +17,15 @@ import torch.nn as nn
 from internnav.model.utils.vln_utils import *
 
 def build_navdp(navdp_cfg):
-    navdp = NavDP_Policy_DPT_CriticSum_DAT(navdp_pretrained=navdp_cfg.navdp_pretrained)
+    navdp_version = getattr(navdp_cfg, "navdp_version", 0.0)
+    if navdp_version > 0.0:
+        memory_size = 2
+    else:
+        memory_size = 3
+        
+    navdp = NavDP_Policy_DPT_CriticSum_DAT(memory_size=memory_size, 
+                                           navdp_pretrained=navdp_cfg.navdp_pretrained,
+                                           navdp_version=navdp_version)
     navdp.load_model()
     return navdp
 
@@ -295,6 +303,9 @@ class InternVLAN1ForCausalLM(Qwen2_5_VLForConditionalGeneration, InternVLAN1Meta
         hidden_states = outputs.hidden_states[-1][:,-N_QUERY:,:]
         return hidden_states
     
-    def generate_traj(self, traj_latents, images_dp=None, depths_dp=None):
-        all_trajs = self.model.navdp.predict_pointgoal_action(traj_latents.to(self.get_model().device), images_dp, depths_dp, vlm_mask=None)
+    def generate_traj(self, traj_latents, images_dp=None, depths_dp=None, use_async=False):
+        if use_async:
+            all_trajs = self.model.navdp.predict_pointgoal_action_async(traj_latents.to(self.get_model().device), images_dp, depths_dp, vlm_mask=None)
+        else:
+            all_trajs = self.model.navdp.predict_pointgoal_action(traj_latents.to(self.get_model().device), vlm_mask=None)
         return all_trajs
