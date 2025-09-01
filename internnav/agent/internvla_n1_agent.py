@@ -202,9 +202,10 @@ class InternVLAN1Agent(Agent):
         
     def should_infer_s2(self, mode="sync"):
         """Function: Enables the sys2 inference thread depending on the mode.
-        mode: just support 2 modes: "sync" and "partpartial_async".
-        Synchronous mode (navdp_version >= 0.0): Sys1 and Sys2 execute in a sequential inference chain.
-        Asynchronous mode (navdp_version > 0.0, e.g., 0.1): Sys2 performs a single inference, while Sys1 performs multiple inference cycles.
+        mode: just support 2 modes: "sync" and "partial_async".
+        "sync": Synchronous mode (navdp_version >= 0.0), Sys1 and Sys2 execute in a sequential inference chain.
+        "partial_async": Asynchronous mode (navdp_version > 0.0, e.g., 0.1), 
+                         Sys2 performs a single inference, while Sys1 performs multiple inference cycles.
         """
         if self.episode_step == 0:
             return True
@@ -218,7 +219,7 @@ class InternVLAN1Agent(Agent):
                 return True
             else:
                 return False
-        # 2. Partial async mode: S2 infers 1 frame while S1 executes 10 frames
+        # 2. Partial async mode: S2 infers 1 frame while S1 executes multi frames
         if mode == "partial_async":
             if self.dual_forward_step >= self.sys2_max_forward_step:
                 return True
@@ -226,33 +227,10 @@ class InternVLAN1Agent(Agent):
                 # This normally only occurs when output is discrete action and discrete action has been fully executed
                 return True
             return False
-        # # 3. Fully async mode: S2 and S1 run completely in parallel, so S2 infers every frame
-        # if mode == "full_async":
-        #     return True
         raise ValueError("Invalid mode: {}".format(mode))
-    
-    def should_infer_s1(self, mode="sync"):
-        # 1. Synchronous mode: need to wait for S2 current frame inference to complete before inferring S1
-        if mode == "sync":
-            if not self.s2_output.is_infering and self.s2_output.idx == self.episode_step:
-                return True
-            return False
-        # 2. Partial async mode: S2 infers 1 frame while S1 executes 10 frames
-        if mode == "partial_async":
-            print(f"self.s2_output.is_infering {self.s2_output.is_infering} self.s2_output.idx {self.s2_output.idx} self.episode_step {self.episode_step}")
-            if not self.s2_output.is_infering and self.s2_output.idx - self.episode_step <= 8 and self.s2_output.idx != -1:
-                return True
-            return False
-        # # 3. Fully async mode: only need S2 output, no waiting, directly infer S1
-        # if mode == "full_async":
-        #     if self.s2_output.idx != -1:
-        #         return True
-        #     return False
-        raise ValueError("Invalid mode: {}".format(mode))
-    
         
     def step(self, obs):
-        mode = self.mode #'sync', 'partial_async', 'full_async'
+        mode = self.mode #'sync', 'partial_async'
         
         obs = obs[0]    # do not support batch_env currently?
         rgb = obs['rgb']
