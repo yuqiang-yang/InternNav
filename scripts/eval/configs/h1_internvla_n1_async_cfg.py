@@ -15,7 +15,7 @@ eval_cfg = EvalCfg(
         ckpt_path='',
         model_settings={
             'env_num': 1, 'sim_num': 1,
-            'model_path': "checkpoints/InternVLA-N1-Preview",
+            'model_path': "checkpoints/InternVLA-N1",
             'camera_intrinsic': [
                 [585.0, 0.0, 320.0], [0.0, 585.0, 240.0], [0.0, 0.0, 1.0]
             ],
@@ -30,6 +30,8 @@ eval_cfg = EvalCfg(
             'device': 'cuda:1',
             'predict_step_nums': 32,
             'continuous_traj': True, 
+            
+            'infer_mode': 'partial_async', # You can choose "sync" or "partial_async", but for this model, "partial_async" is better.
             # debug
             'vis_debug': True, # If vis_debug=True, you can get visualization results
             'vis_debug_path': './logs/test/vis_debug' 
@@ -48,6 +50,7 @@ eval_cfg = EvalCfg(
             'env_num': 1,
             'use_distributed': False, # If the others setting in task_settings, please set use_distributed = False.
             'proc_num': 1,
+            # 'max_step': 1000, #If use flash mode，default 1000; descrete mode, set 50000 
         },
         scene=SceneCfg(
             scene_type='mp3d',
@@ -64,8 +67,8 @@ eval_cfg = EvalCfg(
         dataset_type="mp3d",
         dataset_settings={
             'base_data_dir': 'data/vln_pe/raw_data/r2r',
-            'split_data_types': ['val_unseen'],  # 'val_seen'
-            'filter_stairs': False,      
+            'split_data_types': ['val_seen', 'val_unseen'],  # 'val_seen'
+            'filter_stairs': False, # For iros challenge, this is False; For results in the paper, this is True.
             # 'selected_scans': ['zsNo4HB9uLZ'],
             # 'selected_scans': ['8194nk5LbLH', 'pLe4wQe7qrG'],
         },

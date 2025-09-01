@@ -36,6 +36,8 @@ class InternVLAN1Agent(Agent):
         env_num = getattr(self._model_settings, 'env_num', 1)
         sim_num = getattr(self._model_settings, 'sim_num', 1)
         self.device = torch.device(self._model_settings.device)
+        self.mode = getattr(self._model_settings, 'infer_mode', 'sync')
+        self.sys2_max_forward_step = getattr(self._model_settings, 'sys2_max_forward_step', 8)
         
         policy = get_policy(self._model_settings.policy_name)
         policy_config = get_config(self._model_settings.policy_name)
@@ -50,6 +52,16 @@ class InternVLAN1Agent(Agent):
         self.episode_step = 0
         self.episode_idx = 0
         self.look_down = False
+        
+        
+        ### for async dual sys
+        self.pixel_goal_rgb = None
+        self.pixel_goal_depth = None
+        self.dual_forward_step = 0
+        self.sys1_infer_times = 0
+        
+        self.sys1_depth_threshold = 5.0
+        self.sys1_forward_step = 4
         
         self.s1_input = S1Input()
         self.s2_input = S2Input()
@@ -94,6 +106,12 @@ class InternVLAN1Agent(Agent):
             self.s2_output = S2Output()
         self.s1_output = S1Output()
         
+        ### for async dual sys
+        self.pixel_goal_rgb = None
+        self.pixel_goal_depth = None
+        self.dual_forward_step = 0 
+        self.sys1_infer_times = 0
+        
         # Reset s2 agent
         with self.s2_agent_lock:
             self.policy.reset()
@@ -132,13 +150,14 @@ class InternVLAN1Agent(Agent):
                     time.sleep(0.5)  # Sleep briefly if inference is not needed
                     continue
                 
-                # Check if currently inferring
-                if not self.s2_output.is_infering:
-                    with self.s2_output_lock:
-                        self.s2_output.is_infering = True
-                else:
-                    time.sleep(0.5)  # Sleep briefly if already inferring
-                    continue
+                # # Check if currently inferring
+                # if self.mode == "sync":
+                #     if not self.s2_output.is_infering:
+                #         with self.s2_output_lock:
+                #             self.s2_output.is_infering = True
+                #     else:
+                #         time.sleep(0.5)  # Sleep briefly if already inferring
+                #         continue
                 
                 # Execute inference
                 success = True
@@ -167,13 +186,14 @@ class InternVLAN1Agent(Agent):
                 with self.s2_output_lock:
                     print(f"get s2 output lock")
                     # S2 output
-                    self.s2_output.is_infering = False
+                    
                     self.s2_output.output_pixel = current_s2_output.output_pixel
                     self.s2_output.output_action = current_s2_output.output_action
                     self.s2_output.output_latent = current_s2_output.output_latent
                     self.s2_output.idx = s2_infer_idx
                     self.s2_output.rgb_memory = self.s2_input.rgb
                     self.s2_output.depth_memory = self.s2_input.depth
+                    self.s2_output.is_infering = False
                 time.sleep(0.01)  # Sleep briefly after completing inference
 
         self.s2_thread = threading.Thread(target=s2_thread_func)
@@ -181,6 +201,12 @@ class InternVLAN1Agent(Agent):
         self.s2_thread.start()
         
     def should_infer_s2(self, mode="sync"):
+        """Function: Enables the sys2 inference thread depending on the mode.
+        mode: just support 2 modes: "sync" and "partial_async".
+        "sync": Synchronous mode (navdp_version >= 0.0), Sys1 and Sys2 execute in a sequential inference chain.
+        "partial_async": Asynchronous mode (navdp_version > 0.0, e.g., 0.1), 
+                         Sys2 performs a single inference, while Sys1 performs multiple inference cycles.
+        """
         if self.episode_step == 0:
             return True
         
@@ -193,41 +219,18 @@ class InternVLAN1Agent(Agent):
                 return True
             else:
                 return False
-        # 2. Partial async mode: S2 infers 1 frame while S1 executes 10 frames
+        # 2. Partial async mode: S2 infers 1 frame while S1 executes multi frames
         if mode == "partial_async":
-            if self.episode_step - self.s2_output.idx >= 8:
+            if self.dual_forward_step >= self.sys2_max_forward_step:
                 return True
             if self.s2_output.output_action is None and self.s2_output.output_pixel is None and self.s2_output.output_latent is None:
                 # This normally only occurs when output is discrete action and discrete action has been fully executed
                 return True
             return False
-        # 3. Fully async mode: S2 and S1 run completely in parallel, so S2 infers every frame
-        if mode == "full_async":
-            return True
         raise ValueError("Invalid mode: {}".format(mode))
-    
-    def should_infer_s1(self, mode="sync"):
-        # 1. Synchronous mode: need to wait for S2 current frame inference to complete before inferring S1
-        if mode == "sync":
-            if not self.s2_output.is_infering and self.s2_output.idx == self.episode_step:
-                return True
-            return False
-        # 2. Partial async mode: S2 infers 1 frame while S1 executes 10 frames
-        if mode == "partial_async":
-            print(f"self.s2_output.is_infering {self.s2_output.is_infering} self.s2_output.idx {self.s2_output.idx} self.episode_step {self.episode_step}")
-            if not self.s2_output.is_infering and self.s2_output.idx - self.episode_step <= 8 and self.s2_output.idx != -1:
-                return True
-            return False
-        # 3. Fully async mode: only need S2 output, no waiting, directly infer S1
-        if mode == "full_async":
-            if self.s2_output.idx != -1:
-                return True
-            return False
-        raise ValueError("Invalid mode: {}".format(mode))
-    
         
     def step(self, obs):
-        mode = 'sync'  # 'sync', 'partial_async', 'full_async'
+        mode = self.mode #'sync', 'partial_async'
         
         obs = obs[0]    # do not support batch_env currently?
         rgb = obs['rgb']
@@ -246,6 +249,9 @@ class InternVLAN1Agent(Agent):
                 self.s2_input.instruction = instruction
                 self.s2_input.should_infer = True
                 self.s2_input.look_down = self.look_down
+                self.s2_output.is_infering = True #for async
+            
+            self.dual_forward_step = 0
         else:
             # Even if this frame doesn't do s2 inference, rgb needs to be provided to ensure history is correct
             self.policy.step_no_infer(rgb, depth, pose)
@@ -275,10 +281,13 @@ class InternVLAN1Agent(Agent):
                     self.s2_output.output_pixel = None
                     self.s2_output.output_latent = None
                 output['action'] = [-1]
+                self.sys1_infer_times = 0
             else:
                 self.look_down = False
+                if self.sys1_infer_times > 0:
+                    self.dual_forward_step += 1
                 
-            print('Output action:', output)
+            # print('Output action:', output, self.dual_forward_step)
             
         else:
             self.look_down = False
@@ -286,7 +295,22 @@ class InternVLAN1Agent(Agent):
             if self.s2_output.output_latent is not None:
                 self.output_pixel = copy.deepcopy(self.s2_output.output_pixel)
                 print(self.output_pixel)
-                self.s1_output = self.policy.s1_step_latent(rgb, depth * 10000.0, self.s2_output.output_latent)
+                
+                if mode != 'sync':
+                    processed_pixel_rgb = np.array(Image.fromarray(self.s2_output.rgb_memory).resize((224, 224))) / 255.0
+                    processed_pixel_depth = np.array(Image.fromarray(self.s2_output.depth_memory[:,:,0]).resize((224, 224))) * 10.0 
+                    processed_pixel_depth[processed_pixel_depth > self.sys1_depth_threshold] = self.sys1_depth_threshold
+                    
+                    processed_rgb = np.array(Image.fromarray(rgb).resize((224, 224))) / 255.0
+                    processed_depth = np.array(Image.fromarray(depth[:,:,0]).resize((224, 224))) * 10.0 # should be 0-10m
+                    processed_depth[processed_depth > self.sys1_depth_threshold] = self.sys1_depth_threshold
+                    
+                    rgbs = torch.stack([torch.from_numpy(processed_pixel_rgb), torch.from_numpy(processed_rgb)]).unsqueeze(0).to(self.device) #[1, 2, 224, 224, 3]
+                    depths = torch.stack([torch.from_numpy(processed_pixel_depth), torch.from_numpy(processed_depth)]).unsqueeze(0).unsqueeze(-1).to(self.device)#[1, 2, 224, 224, 1]
+                    self.s1_output = self.policy.s1_step_latent(rgbs, depths, self.s2_output.output_latent, use_async=True)
+                else:
+                    self.s1_output = self.policy.s1_step_latent(rgb, depth * 10000.0, self.s2_output.output_latent, use_async=False)
+                    
             else:
                 assert False, f"S2 output should be either action or latent, but got neither!  {self.s2_output}"
             
@@ -301,9 +325,27 @@ class InternVLAN1Agent(Agent):
                         self.s2_output.output_action = None
                 else:
                     self.s2_output.output_action = None
-                self.s2_output.output_pixel = None
-                self.s2_output.output_latent = None
-            print('Output discretized traj:', output['action'])
+                    
+                
+                self.s2_output.output_pixel = None #TODO: now just for visulization
+                if mode == 'sync':
+                    self.s2_output.output_latent = None
+                else:
+                    # already reach the pixel-goal
+                    if len(self.s1_output.idx) < self.sys1_forward_step:
+                        all_step_ = len(self.s1_output.idx) + self.dual_forward_step
+                        if all_step_ < self.sys2_max_forward_step:
+                            self.dual_forward_step = self.sys2_max_forward_step - len(self.s1_output.idx)
+
+                    self.sys1_infer_times += 1
+                    self.dual_forward_step += 1
+        
+                    if self.dual_forward_step > self.sys2_max_forward_step:
+                        print("!!!!!!!!!!!!")
+                        print("ERR: self.dual_forward_step ", self.dual_forward_step, " > ", self.sys2_max_forward_step)
+                        print("!!!!!!!!!!!!")
+            
+        print('Output discretized traj:', output['action'], self.dual_forward_step)
         
         # Visualization  
         if self.vis_debug:
