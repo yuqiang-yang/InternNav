@@ -203,7 +203,7 @@ class InternVLAN1Agent(Agent):
     def should_infer_s2(self, mode="sync"):
         """Function: Enables the sys2 inference thread depending on the mode.
         mode: just support 2 modes: "sync" and "partpartial_async".
-        Synchronous mode (navdp_version == 0.0): Sys1 and Sys2 execute in a sequential inference chain.
+        Synchronous mode (navdp_version >= 0.0): Sys1 and Sys2 execute in a sequential inference chain.
         Asynchronous mode (navdp_version > 0.0, e.g., 0.1): Sys2 performs a single inference, while Sys1 performs multiple inference cycles.
         """
         if self.episode_step == 0:
