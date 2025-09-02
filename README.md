@@ -168,11 +168,11 @@ Please refer to the [documentation](https://internrobotics.github.io/user_guide/
 #### Visual Navigation Task - PointGoal Navigation
 | Model  | Dataset/Benchmark | SR | SPL | Download |
 | ------ | ----------------- | -- | -- | --------- |
-| `iPlanner` | ClutteredEnv | 82.8 | 81.4 | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) | 
-| `ViPlanner` | ClutteredEnv | 16.7 | 14.1 | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) | 
-| `InternVLA-N1 (S1)` | ClutteredEnv | **88.4** | **85.0** | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) |
-| `iPlanner` | InternScenes | 45.6 | 43.9 | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) | 
-| `ViPlanner` | InternScenes | 37.8 | 33.9 | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) | 
+| `iPlanner` | ClutteredEnv | 84.8 | 83.6 | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) | 
+| `ViPlanner` | ClutteredEnv | 72.4 | 72.3 | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) | 
+| `InternVLA-N1 (S1)` | ClutteredEnv | **89.8** | **87.7** | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) |
+| `iPlanner` | InternScenes | 48.8 | 46.7 | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) | 
+| `ViPlanner` | InternScenes | 54.3 | 52.5 | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) | 
 | `InternVLA-N1 (S1)` | InternScenes | **65.7** | **60.7** | [Model](https://github.com/InternRobotics/NavDP?tab=readme-ov-file#%EF%B8%8F-installation-of-baseline-library) | 
 
 
