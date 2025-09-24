@@ -101,6 +101,49 @@ class InternVLAN1ForCausalLM(Qwen2_5_VLForConditionalGeneration, InternVLAN1Meta
     def get_model(self):
         return self.model
 
+    def prepare_inputs_for_generation(
+        self,
+        input_ids,
+        past_key_values=None,
+        attention_mask=None,
+        inputs_embeds=None,
+        cache_position=None,
+        position_ids=None,
+        use_cache=True,
+        pixel_values=None,
+        pixel_values_videos=None,
+        image_grid_thw=None,
+        video_grid_thw=None,
+        second_per_grid_ts=None,
+        **kwargs,
+    ):
+        # Overwritten -- in specific circumstances we don't want to forward image inputs to the model
+
+        model_inputs = super().prepare_inputs_for_generation(
+            input_ids,
+            past_key_values=past_key_values,
+            attention_mask=attention_mask,
+            inputs_embeds=inputs_embeds,
+            cache_position=cache_position,
+            position_ids=position_ids,
+            pixel_values=pixel_values,
+            pixel_values_videos=pixel_values_videos,
+            image_grid_thw=image_grid_thw,
+            video_grid_thw=video_grid_thw,
+            second_per_grid_ts=second_per_grid_ts,
+            use_cache=use_cache,
+            **kwargs,
+        )
+        # Qwen2-5-VL position_ids are prepareed with rope_deltas in forward
+        model_inputs["position_ids"] = None
+
+        # add for QwenVL kv cache
+        model_inputs["pixel_values"] = pixel_values
+        model_inputs["pixel_values_videos"] = pixel_values_videos
+
+        return model_inputs
+    
+    
     def forward(
         self,
         input_ids: Optional[torch.LongTensor] = None,
@@ -121,6 +164,7 @@ class InternVLAN1ForCausalLM(Qwen2_5_VLForConditionalGeneration, InternVLAN1Meta
         rope_deltas: Optional[torch.LongTensor] = None,
         cache_position: Optional[torch.LongTensor] = None,
         second_per_grid_ts: Optional[torch.Tensor] = None,
+        raw_input_ids: Optional[torch.LongTensor] = None,
     ) -> Union[Tuple, CausalLMOutputWithPast]:
         r"""
             labels (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
@@ -169,10 +213,11 @@ class InternVLAN1ForCausalLM(Qwen2_5_VLForConditionalGeneration, InternVLAN1Meta
 
         if inputs_embeds is None:
             inputs_embeds = self.model.embed_tokens(input_ids)
-            if pixel_values is not None:
+            n_image_tokens = (input_ids == self.config.image_token_id).sum().item()
+            if pixel_values is not None and n_image_tokens > 0:
                 pixel_values = pixel_values.type(self.visual.dtype)
                 image_embeds = self.visual(pixel_values, grid_thw=image_grid_thw)
-                n_image_tokens = (input_ids == self.config.image_token_id).sum().item()
+                image_embeds = image_embeds[-n_image_tokens:]
                 n_image_features = image_embeds.shape[0]
                 if n_image_tokens != n_image_features:
                     raise ValueError(
@@ -231,6 +276,22 @@ class InternVLAN1ForCausalLM(Qwen2_5_VLForConditionalGeneration, InternVLAN1Meta
                     second_per_grid_ts,
                     attention_mask,
                 )
+                self.rope_deltas = rope_deltas
+            elif n_image_tokens > 0: # using only for kv cache
+                attention_mask = attention_mask[:, :raw_input_ids.shape[1]]
+                position_ids, rope_deltas = self.get_rope_index(
+                    raw_input_ids,
+                    image_grid_thw,
+                    video_grid_thw,
+                    second_per_grid_ts,
+                    attention_mask,
+                )
+                delta = (
+                    (cache_position[0] + self.rope_deltas).to(inputs_embeds.device)
+                    if cache_position is not None
+                    else 0
+                )
+                position_ids = position_ids[:, :,-input_ids.shape[1]:]
                 self.rope_deltas = rope_deltas
             # then use the prev pre-calculated rope-deltas to get the correct position ids
             else:

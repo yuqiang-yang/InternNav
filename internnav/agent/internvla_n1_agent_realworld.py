@@ -202,10 +202,10 @@ class InternVLAN1AsyncAgent:
                 **inputs, 
                 max_new_tokens=128, 
                 do_sample=False,
-                # use_cache=True,
-                # past_key_values=self.past_key_values,
+                use_cache=True,
+                past_key_values=self.past_key_values,
                 return_dict_in_generate=True,
-                # raw_input_ids=copy.deepcopy(inputs.input_ids),
+                raw_input_ids=copy.deepcopy(inputs.input_ids),
             )
         output_ids = outputs.sequences
         
