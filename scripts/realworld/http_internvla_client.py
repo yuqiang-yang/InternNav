@@ -108,7 +108,7 @@ def planning_thread():
 
     while True:
         start_time = time.time()
-        DISIRED_TIME = 0.3
+        DESIRED_TIME = 0.3
         time.sleep(0.05)
 
         if not manager.new_image_arrived:
@@ -193,7 +193,7 @@ def planning_thread():
             )
             time.sleep(0.1)
 
-        time.sleep(max(0, DISIRED_TIME - (time.time() - start_time)))
+        time.sleep(max(0, DESIRED_TIME - (time.time() - start_time)))
 
 
 class Go2Manager(Node):
@@ -344,7 +344,8 @@ class Go2Manager(Node):
 if __name__ == '__main__':
     control_thread_instance = threading.Thread(target=control_thread)
     planning_thread_instance = threading.Thread(target=planning_thread)
-
+    control_thread_instance.daemon = True
+    planning_thread_instance.daemon = True
     rclpy.init()
 
     try:

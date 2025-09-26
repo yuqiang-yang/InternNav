@@ -13,6 +13,16 @@ from scipy.interpolate import interp1d
 
 class Mpc_controller:
     def __init__(self, global_planed_traj, N=20, desired_v=0.3, v_max=0.4, w_max=0.4, ref_gap=4):
+        """Initialize the MPC controller.
+
+        Args:
+            global_planed_traj (np.ndarray): The global planned trajectory, shape (n, 2).
+            N (int): Prediction horizon.
+            desired_v (float): Desired linear velocity.
+            v_max (float): Maximum linear velocity.
+            w_max (float): Maximum angular velocity.
+            ref_gap (int): Gap between reference points in the prediction horizon.
+        """
         self.N, self.desired_v, self.ref_gap, self.T = N, desired_v, ref_gap, 0.1
         self.ref_traj = self.make_ref_denser(global_planed_traj)
         self.ref_traj_len = N // ref_gap + 1
@@ -141,6 +151,16 @@ class Mpc_controller:
 
 class PID_controller:
     def __init__(self, Kp_trans=1.0, Kd_trans=0.1, Kp_yaw=1.0, Kd_yaw=1.0, max_v=1.0, max_w=1.2):
+        """Initialize the PID controller.
+
+        Args:
+            Kp_trans (float): Proportional gain for translational error.
+            Kd_trans (float): Derivative gain for translational error.
+            Kp_yaw (float): Proportional gain for yaw error.
+            Kd_yaw (float): Derivative gain for yaw error.
+            max_v (float): Maximum linear velocity.
+            max_w (float): Maximum angular velocity.
+        """
         self.Kp_trans = Kp_trans
         self.Kd_trans = Kd_trans
         self.Kp_yaw = Kp_yaw

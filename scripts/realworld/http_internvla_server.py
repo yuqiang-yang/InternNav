@@ -1,15 +1,10 @@
 import argparse
 import json
 import os
-import sys
 import time
-
-import numpy as np
-
-sys.path.append('/home/pjlab/yq_ws/InternNav')
-
 from datetime import datetime
 
+import numpy as np
 from flask import Flask, jsonify, request
 from PIL import Image
 
