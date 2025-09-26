@@ -1,5 +1,6 @@
 import threading
 
+
 class ReadWriteLock:
     def __init__(self):
         self._read_ready = threading.Condition(threading.Lock())
