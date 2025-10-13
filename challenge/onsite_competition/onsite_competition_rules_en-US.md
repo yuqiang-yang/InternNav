@@ -74,18 +74,17 @@ Participants must not seek unfair advantages. Restrictions include:
 
 ## 5. Scoring System
 ### 5.1 Onsite Scoring
-Each team starts with 0 points. Multiple attempts per instruction are allowed, but only the highest score per instruction counts.
+The competition will calculate each team’s success rate over ten tasks, and the final score will be obtained by taking a weighted average with the success rate from the online competition.
 
 **Scoring Rules**:
-Successfully completing one instruction will add 10 points to the total score, and the completion time for that instruction will be recorded.
+Successfully completing one instruction will be one success, and the completion time for that instruction will be recorded.
 
 | Action | Score Impact |
 |:--|:--|
-| Successfully reach goal | +10 points |
-| Minor scrape more than 5 times or Collision with obstacle | 0 points, navigation terminated for this instruction |
+| Successfully reach goal | success |
+| Minor scrape more than 5 times or Collision with obstacle | fail |
 
-If there is a trend of continuous collisions, the referee has the right to terminate the robot’s current action.
-If the collision occurs only once at the end of a forward movement when approaching an obstacle, it may be considered a minor scrape, with the severity of the impact determined by the on-site referee.
+If there is a trend of continuous collisions, the referee has the right to terminate the robot’s current action, with the severity of the impact determined by the on-site referee.
 
 **Success Condition**:
  The goal is defined as a 2m-radius circular area (no wall crossing). The run is considered successful if the robot stops inside this area.
