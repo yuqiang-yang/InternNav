@@ -56,7 +56,7 @@ def chunk_token(dp_actions):
 
     return out_list
 
-def traj_to_actions(dp_actions):
+def traj_to_actions(dp_actions, use_discrate_action=True):
     def reconstruct_xy_from_delta(delta_xyt):
         """
         Input:
@@ -125,8 +125,11 @@ def traj_to_actions(dp_actions):
     dp_actions[:, :, :2] /= 4.0
     all_trajectory = reconstruct_xy_from_delta(dp_actions.float().cpu().numpy())
     trajectory = np.mean(all_trajectory, axis=0)
-    actions = trajectory_to_discrete_actions_close_to_goal(trajectory)
-    return actions
+    if use_discrate_action:
+        actions = trajectory_to_discrete_actions_close_to_goal(trajectory)
+        return actions
+    else:
+        return trajectory
 
 @dataclass
 class S2Input:
@@ -143,6 +146,7 @@ class S2Output:
     idx: Optional[int] = -1
     is_infering: Optional[bool] = False
     output_action: Optional[np.ndarray] = None
+    output_trajectory: Optional[np.ndarray] = None
     output_pixel: Optional[np.ndarray] = None
     output_latent: Optional[torch.Tensor] = None
     rgb_memory: Optional[np.ndarray] = None # 用于记录pixel goal那一帧的rgb
