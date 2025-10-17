@@ -76,11 +76,12 @@ def eval_dual():
     print(f"json_output {json_output}")
     return jsonify(json_output)
 
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--device", type=str, default="cuda:0")
-    parser.add_argument("--model_path", type=str, default="/home/pjlab/fengdelin/data/InternVLA-N1")
+    parser.add_argument("--model_path", type=str, default="checkpoints/InternVLA-N1")
     parser.add_argument("--resize_w", type=int, default=384)
     parser.add_argument("--resize_h", type=int, default=384)
     parser.add_argument("--num_history", type=int, default=8)
@@ -90,7 +91,12 @@ if __name__ == '__main__':
         [[386.5, 0.0, 328.9, 0.0], [0.0, 386.5, 244, 0.0], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]]
     )
     agent = InternVLAN1AsyncAgent(args)
-    agent.step(np.zeros((480, 640, 3)), np.zeros((480, 640)), np.eye(4), "hello", )
+    agent.step(
+        np.zeros((480, 640, 3)),
+        np.zeros((480, 640)),
+        np.eye(4),
+        "hello",
+    )
     agent.reset()
 
     app.run(host='0.0.0.0', port=5801)

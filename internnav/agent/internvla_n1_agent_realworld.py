@@ -31,7 +31,7 @@ class InternVLAN1AsyncAgent:
         self.model = InternVLAN1ForCausalLM.from_pretrained(
             args.model_path,
             torch_dtype=torch.bfloat16,
-            # attn_implementation="flash_attention_2",
+            attn_implementation="flash_attention_2",
             device_map={"": self.device},
         )
         self.model.eval()

@@ -1,10 +1,10 @@
+from dataclasses import dataclass
+from typing import Optional, Tuple
+
 import numpy as np
 import torch
 from PIL import Image
 from torch import Tensor
-from typing import Optional, Tuple
-import torch
-from dataclasses import dataclass
 
 
 def open_image(image_or_image_path):
@@ -15,9 +15,11 @@ def open_image(image_or_image_path):
     else:
         raise ValueError("Unsupported input type!")
 
+
 def split_and_clean(text):
     # Split by <image> while preserving the delimiter
     import re
+
     parts = re.split(r'(<image>)', text)
     results = []
     for part in parts:
@@ -30,10 +32,11 @@ def split_and_clean(text):
                 results.append(clean_part)
     return results
 
+
 def chunk_token(dp_actions):
     out_list = []
     out_list_read = []
-    
+
     for i in range(len(dp_actions)):
         xyyaw = dp_actions[i]
         x = xyyaw[0]
@@ -55,6 +58,7 @@ def chunk_token(dp_actions):
                 out_list.append(2)
 
     return out_list
+
 
 def traj_to_actions(dp_actions, use_discrate_action=True):
     def reconstruct_xy_from_delta(delta_xyt):
@@ -84,7 +88,7 @@ def traj_to_actions(dp_actions, use_discrate_action=True):
         turn_angle_rad = np.deg2rad(turn_angle_deg)
         traj = trajectory
         goal = trajectory[-1]
-        
+
         def normalize_angle(angle):
             return (angle + np.pi) % (2 * np.pi) - np.pi
 
@@ -120,7 +124,7 @@ def traj_to_actions(dp_actions, use_discrate_action=True):
             pos = next_pos
 
         return actions
-    
+
     # unnormalize
     dp_actions[:, :, :2] /= 4.0
     all_trajectory = reconstruct_xy_from_delta(dp_actions.float().cpu().numpy())
@@ -130,6 +134,7 @@ def traj_to_actions(dp_actions, use_discrate_action=True):
         return actions
     else:
         return trajectory
+
 
 @dataclass
 class S2Input:
@@ -141,6 +146,7 @@ class S2Input:
     look_down: Optional[bool] = False
     should_infer: Optional[bool] = False
 
+
 @dataclass
 class S2Output:
     idx: Optional[int] = -1
@@ -149,21 +155,23 @@ class S2Output:
     output_trajectory: Optional[np.ndarray] = None
     output_pixel: Optional[np.ndarray] = None
     output_latent: Optional[torch.Tensor] = None
-    rgb_memory: Optional[np.ndarray] = None # 用于记录pixel goal那一帧的rgb
-    depth_memory: Optional[np.ndarray] = None # 用于记录pixel goal那一帧的depth
- 
+    rgb_memory: Optional[np.ndarray] = None  # 用于记录pixel goal那一帧的rgb
+    depth_memory: Optional[np.ndarray] = None  # 用于记录pixel goal那一帧的depth
+
     def validate(self):
         """确保output_action、output_pixel和output_latent中只有一个为非None"""
         outputs = [self.output_action, self.output_pixel, self.output_latent]
         non_none_count = sum(1 for x in outputs if x is not None)
         return non_none_count > 0 and self.idx >= 0
-        
+
+
 @dataclass
 class S1Input:
     pixel_goal: Optional[np.ndarray] = None
     latent: Optional[np.ndarray] = None
     rgb: Optional[np.ndarray] = None
     depth: Optional[np.ndarray] = None
+
 
 @dataclass
 class S1Output:
@@ -173,7 +181,6 @@ class S1Output:
     linear_velocity: Optional[float] = None  # Linear velocity
     angular_velocity: Optional[float] = None  # Angular velocity
     vis_image: Optional[np.ndarray] = None
-
 
 
 def image_resize(
@@ -244,6 +251,7 @@ def rho_theta(curr_pos: np.ndarray, curr_heading: float, curr_goal: np.ndarray) 
     theta = np.arctan2(local_goal[1], local_goal[0])
 
     return float(rho), float(theta)
+
 
 def get_rotation_matrix(angle: float, ndims: int = 2) -> np.ndarray:
     """Returns a 2x2 or 3x3 rotation matrix for a given angle; if 3x3, the z-axis is
