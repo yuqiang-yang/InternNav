@@ -1,4 +1,3 @@
-import random
 import time
 
 import numpy as np
@@ -6,9 +5,9 @@ import torch
 from gym import spaces
 
 from internnav.agent.base import Agent
+from internnav.agent.utils.common import batch_obs, set_seed_model
 from internnav.configs.agent import AgentCfg
 from internnav.configs.model.base_encoders import ModelCfg
-from internnav.evaluator.utils.models import batch_obs
 from internnav.model import get_config, get_policy
 from internnav.model.basemodel.LongCLIP.model import longclip
 from internnav.model.basemodel.rdp.utils import (
@@ -25,15 +24,7 @@ from internnav.model.utils.feature_extract import (
     extract_image_features,
     extract_instruction_tokens,
 )
-from internnav.utils import common_log_util
 from internnav.utils.common_log_util import common_logger as log
-
-
-def set_random_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
 
 
 @Agent.register('rdp')
@@ -47,7 +38,7 @@ class RdpAgent(Agent):
 
     def __init__(self, config: AgentCfg):
         super().__init__(config)
-        set_random_seed(0)
+        set_seed_model(0)
         self._model_settings = self.config.model_settings
         self._model_settings = ModelCfg(**self._model_settings)
         env_num = getattr(self._model_settings, 'env_num', 1)
@@ -348,5 +339,12 @@ class RdpAgent(Agent):
         start = time.time()
         action = self.inference(obs)
         end = time.time()
-        print(f'总时间： {round(end-start,4)}s')
-        return action
+        print(f'总时间： {round(end-start, 4)}s')
+
+        # convert from [[a1],[a2]] to [{'action': [a1],'ideal_flag':True}, {'action': [a2],'ideal_flag':True}]
+        actions = []
+        for a in action:
+            if not isinstance(a, list):
+                a = [a]
+            actions.append({'action': a, 'ideal_flag': True})
+        return actions
