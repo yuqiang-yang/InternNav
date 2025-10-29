@@ -1,6 +1,9 @@
 import argparse
 import json
 import os
+import sys
+
+sys.path.append('./src/diffusion-policy')
 
 import numpy as np
 import torch
