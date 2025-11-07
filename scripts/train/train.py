@@ -77,12 +77,12 @@ def main(config, model_class, model_config_class):
         """Main training function."""
         _make_dir(config)
 
-        print(f"=== Start training ===")
+        print("=== Start training ===")
         print(f"Current time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"PyTorch version: {torch.__version__}")
         print(f"CUDA available: {torch.cuda.is_available()}")
         print(f"CUDA device count: {torch.cuda.device_count()}")
-        print(f"Environment variables:")
+        print("Environment variables:")
         print(f"  RANK: {os.getenv('RANK', 'Not set')}")
         print(f"  LOCAL_RANK: {os.getenv('LOCAL_RANK', 'Not set')}")
         print(f"  WORLD_SIZE: {os.getenv('WORLD_SIZE', 'Not set')}")
@@ -172,6 +172,7 @@ def main(config, model_class, model_config_class):
                 config.il.batch_size,
                 config.il.image_size,
                 config.il.scene_scale,
+                pixel_channel=config.il.pixel_channel,
                 preload=config.il.preload,
                 random_digit=config.il.random_digit,
                 prior_sample=config.il.prior_sample,
